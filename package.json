@@ -18,7 +18,9 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@payloadcms/db-postgres": "3.89.0",
     "@payloadcms/next": "3.89.0",
+    "@payloadcms/plugin-multi-tenant": "^3.89.0",
     "@payloadcms/richtext-lexical": "3.89.0",
     "@payloadcms/ui": "3.89.0",
     "cross-env": "^7.0.3",
@@ -28,8 +30,7 @@
     "payload": "3.89.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "sharp": "0.34.2",
-    "@payloadcms/db-postgres": "3.89.0"
+    "sharp": "0.34.2"
   },
   "devDependencies": {
     "@playwright/test": "1.58.2",
@@ -57,5 +58,6 @@
       "esbuild",
       "unrs-resolver"
     ]
-  }
+  },
+  "packageManager": "pnpm@12.4.1+sha512.2e81e399d73fe8390dab25e06aa788ab7a5908248d2f5a370f82b481147a6a7a367bf8048f9a6fdb6460f21a66f0542dedb8b94ca2c8723596741920b1656d4c"
 }
