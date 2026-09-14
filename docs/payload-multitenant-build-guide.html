@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Building a multi-tenant marketplace with Payload CMS &mdash; step by step</title>
+<meta name="description" content="Twenty-four steps from an empty folder to a deployed multi-tenant property marketplace on Payload CMS: tenants, membership, access control, subdomain routing, customers, enquiries and deployment.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#e8eae4;
+  --surface:#ffffff;
+  --surface-2:#f3f4ef;
+  --ink:#14201d;
+  --ink-2:#39474300;
+  --body:#26332f;
+  --muted:#68776f;
+  --rule:#cfd4cb;
+  --rule-strong:#aab3a8;
+  --accent:#15596b;
+  --accent-soft:#dfeaee;
+  --allow:#2f6b3f;
+  --deny:#9b3226;
+  --warn:#87591a;
+  --code-bg:#0e1a1d;
+  --code-ink:#cdd9d7;
+  --code-dim:#6f8483;
+  --code-str:#9dc7a4;
+  --code-key:#7fbcd2;
+  --code-num:#d7ab6b;
+  --maxw:none;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--body);
+  font-family:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  font-size:17.5px;
+  line-height:1.62;
+  font-synthesis-weight:none;
+}
+h1,h2,h3,h4,.ui,nav,th,button,.chip,.numeral,.code-head,figcaption{
+  font-family:"Space Grotesk","Helvetica Neue",Arial,sans-serif;
+}
+a{color:var(--accent);text-underline-offset:.18em;text-decoration-thickness:.06em}
+a:hover{text-decoration-thickness:.12em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+/* ---------- hero ---------- */
+.hero{background:var(--ink);color:#e7ece9;padding:56px 0 44px;border-bottom:6px solid var(--accent)}
+.hero-inner{max-width:1180px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,460px);gap:48px;align-items:center}
+.kicker{font-family:"Space Grotesk",sans-serif;font-size:.78rem;letter-spacing:.02em;color:#8fb4bd;margin:0 0 14px}
+.hero h1{font-size:clamp(2rem,4.4vw,3.05rem);line-height:1.04;letter-spacing:-.022em;font-weight:700;margin:0 0 18px;color:#fff}
+.hero p{font-size:1.06rem;margin:0 0 12px;color:#c3cecb;max-width:56ch}
+.hero .facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;list-style:none;padding:0}
+.hero .facts li{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.74rem;color:#bcd3d8;border:1px solid #33474c;border-radius:2px;padding:5px 9px}
+.hero svg{width:100%;height:auto;display:block}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:252px minmax(0,1fr);gap:56px;align-items:start}
+.toc{position:sticky;top:0;max-height:100vh;overflow-y:auto;padding:34px 0 40px;font-size:.9rem}
+.toc ol{list-style:none;margin:0;padding:0}
+.toc > ol > li{margin-bottom:2px}
+.toc a{display:block;text-decoration:none;color:var(--muted);padding:4px 10px 4px 12px;border-left:2px solid var(--rule);line-height:1.3}
+.toc a:hover{color:var(--ink);background:var(--surface-2)}
+.toc a.on{color:var(--ink);border-left-color:var(--accent);font-weight:500;background:var(--surface-2)}
+.toc .num{font-family:"JetBrains Mono",monospace;font-size:.72rem;color:var(--rule-strong);margin-right:7px}
+.toc a.on .num{color:var(--accent)}
+.toc ol ol a{padding-left:34px;font-size:.84rem}
+.toc-title{font-family:"Space Grotesk",sans-serif;font-size:.72rem;letter-spacing:.06em;color:var(--muted);padding:0 12px 10px;margin:0}
+main{padding:34px 0 120px;min-width:0}
+
+/* ---------- headings & prose ---------- */
+.chapter{padding-top:26px;margin-bottom:16px}
+.chapter + .chapter{border-top:1px solid var(--rule);margin-top:44px}
+h2{font-size:1.72rem;line-height:1.15;letter-spacing:-.015em;font-weight:700;color:var(--ink);margin:0 0 18px;display:flex;gap:14px;align-items:baseline}
+.numeral{font-family:"JetBrains Mono",monospace;font-size:.86rem;font-weight:400;color:var(--accent);border:1px solid var(--rule-strong);border-radius:2px;padding:3px 7px;flex:none;transform:translateY(-3px)}
+h3{font-size:1.14rem;font-weight:700;letter-spacing:-.008em;color:var(--ink);margin:36px 0 10px}
+h4{font-size:.98rem;font-weight:700;color:var(--ink);margin:24px 0 8px}
+p{margin:0 0 15px;max-width:74ch}
+ul,ol{max-width:74ch;padding-left:22px;margin:0 0 15px}
+li{margin-bottom:7px}
+li > ul,li > ol{margin-top:7px}
+strong{font-weight:600;color:var(--ink)}
+em{font-style:italic}
+code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em}
+p code,li code,td code,th code{background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:1px 4px;color:#0f3a45;white-space:nowrap}
+.lede{font-size:1.08rem;color:var(--ink)}
+
+/* ---------- code ---------- */
+figure.code{margin:20px 0;border-radius:3px;overflow:hidden;background:var(--code-bg);box-shadow:0 1px 0 rgba(20,32,29,.14)}
+.code-head{display:flex;justify-content:space-between;align-items:center;background:#16262a;padding:7px 12px;border-bottom:1px solid #23383d}
+.code-file{font-size:.72rem;color:#8aa5a8;font-family:"JetBrains Mono",monospace}
+.copy{font-family:"Space Grotesk",sans-serif;font-size:.7rem;color:#8aa5a8;background:none;border:1px solid #2c4449;border-radius:2px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:#dff0f0;border-color:#4b6b70}
+figure.code pre{margin:0;padding:15px 16px;overflow-x:auto}
+figure.code code{color:var(--code-ink);font-size:12.9px;line-height:1.62;white-space:pre}
+.tok-com{color:var(--code-dim);font-style:italic}
+.tok-str{color:var(--code-str)}
+.tok-key{color:var(--code-key)}
+.tok-num{color:var(--code-num)}
+
+/* ---------- callouts ---------- */
+.call{border-left:3px solid var(--accent);background:var(--surface);padding:14px 18px;margin:20px 0;border-radius:0 3px 3px 0}
+.call p{margin:0 0 8px}
+.call p:last-child{margin:0}
+.call .label{font-family:"Space Grotesk",sans-serif;font-size:.74rem;font-weight:700;letter-spacing:.01em;display:block;margin-bottom:5px;color:var(--accent)}
+.call.warn{border-left-color:var(--warn)}
+.call.warn .label{color:var(--warn)}
+.call.danger{border-left-color:var(--deny)}
+.call.danger .label{color:var(--deny)}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto;margin:20px 0}
+table{border-collapse:collapse;width:100%;font-size:.92rem;background:var(--surface)}
+th{font-size:.76rem;font-weight:700;letter-spacing:.01em;text-align:left;color:var(--ink);border-bottom:2px solid var(--rule-strong);padding:9px 12px;vertical-align:bottom}
+td{border-bottom:1px solid var(--rule);padding:10px 12px;vertical-align:top;line-height:1.45}
+tbody tr:last-child td{border-bottom:none}
+td strong{white-space:nowrap}
+.chip{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:2px;white-space:nowrap}
+.chip.yes{background:#e2efe4;color:var(--allow)}
+.chip.no{background:#f4e2df;color:var(--deny)}
+.chip.part{background:#f5ead6;color:var(--warn)}
+
+/* ---------- decision blocks ---------- */
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.choice > div{background:var(--surface);border:1px solid var(--rule);border-top:3px solid var(--rule-strong);padding:16px 18px;border-radius:0 0 3px 3px}
+.choice > div.pick{border-top-color:var(--accent)}
+.choice h4{margin:0 0 8px;font-size:.95rem}
+.choice p:last-child,.choice ul:last-child{margin-bottom:0}
+.choice ul{font-size:.93rem;padding-left:18px}
+.verdict{font-family:"Space Grotesk",sans-serif;font-size:.72rem;font-weight:700;color:var(--accent);display:block;margin-bottom:8px}
+
+/* ---------- figures / diagrams ---------- */
+figure.dia{margin:24px 0;background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:22px 20px 14px}
+figure.dia svg{width:100%;height:auto;display:block}
+figcaption{font-size:.78rem;color:var(--muted);margin-top:12px;text-align:left;font-family:"Space Grotesk",sans-serif}
+
+/* ---------- checklist ---------- */
+.check{list-style:none;padding:0;max-width:74ch}
+.check li{display:flex;gap:11px;align-items:flex-start;padding:9px 12px;background:var(--surface);border:1px solid var(--rule);border-radius:3px;margin-bottom:7px;font-size:.95rem}
+.check input{margin:5px 0 0;accent-color:var(--accent);flex:none;width:15px;height:15px}
+.check input:checked + span{color:var(--muted);text-decoration:line-through}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--rule);margin-top:56px;padding-top:22px;font-size:.86rem;color:var(--muted)}
+.foot a{color:var(--accent)}
+.foot ul{padding-left:20px}
+
+.navtoggle{display:none}
+
+@media (max-width:980px){
+  .hero-inner{grid-template-columns:1fr;gap:30px}
+  .wrap{grid-template-columns:1fr;gap:0;padding:0 20px}
+  .toc{position:static;max-height:none;padding:18px 0 0;border-bottom:1px solid var(--rule)}
+  .toc ol ol{display:none}
+  .toc[data-open="false"] > ol{display:none}
+  .navtoggle{display:block;width:100%;text-align:left;font-family:"Space Grotesk",sans-serif;font-size:.85rem;background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:9px 12px;margin-bottom:12px;cursor:pointer;color:var(--ink)}
+  .choice{grid-template-columns:1fr}
+  body{font-size:17px}
+  main{padding-top:24px}
+}
+@media print{
+  .toc,.copy,.navtoggle{display:none}
+  .wrap{display:block;max-width:none}
+  body{background:#fff;font-size:11pt}
+  .hero{background:#fff;color:#000;border-bottom:2px solid #000}
+  .hero h1,.hero p{color:#000}
+  figure.code{background:#f4f4f4}
+  figure.code code{color:#111}
+  .chapter{page-break-inside:auto}
+  h2,h3{page-break-after:avoid}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+
+/* ---- parts ---- */
+.part-head{margin:64px 0 8px;padding:22px 0 20px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule)}
+.part-head:first-child{margin-top:8px}
+.part-letter{font-family:"JetBrains Mono",monospace;font-size:.72rem;color:var(--accent);display:block;margin-bottom:6px}
+.part-title{font-size:1.34rem;margin:0 0 8px;display:block;color:var(--ink);letter-spacing:-.012em}
+.part-head p{margin:0;color:var(--muted);font-size:.97rem;max-width:66ch}
+
+/* ---- steps ---- */
+.step{padding-top:34px}
+.chapter.step + .chapter.step{border-top:1px dotted var(--rule);margin-top:34px}
+.step h2{font-size:1.42rem}
+.goal{font-size:.97rem;color:var(--ink);border-left:3px solid var(--accent);background:var(--surface);padding:10px 16px;margin:0 0 16px;border-radius:0 3px 3px 0;max-width:74ch}
+.files{list-style:none;display:flex;flex-wrap:wrap;gap:6px;padding:0;margin:0 0 20px;max-width:none}
+.files li{font-family:"JetBrains Mono",monospace;font-size:.71rem;color:var(--muted);background:var(--surface-2);border:1px solid var(--rule);border-radius:2px;padding:3px 8px;margin:0}
+
+/* ---- terminal + tree blocks ---- */
+figure.code.term .code-head{background:#132420;border-bottom-color:#204035}
+figure.code.term .code-file{color:#8ab29c}
+figure.code.term{background:#0c1815}
+figure.code.tree .code-head{background:#1d2126;border-bottom-color:#2c3238}
+figure.code.tree{background:#12171a}
+
+/* ---- checkpoint ---- */
+.checkpoint{border:1px solid var(--allow);background:#eef4ee;border-radius:3px;padding:14px 18px;margin:22px 0}
+.checkpoint .label{font-family:"Space Grotesk",sans-serif;font-size:.74rem;font-weight:700;color:var(--allow);display:block;margin-bottom:8px}
+.checkpoint ul{margin:0;padding-left:20px;font-size:.95rem}
+.checkpoint li{margin-bottom:5px}
+.checkpoint li:last-child{margin-bottom:0}
+
+/* ---- toc parts ---- */
+.toc .part{font-family:"Space Grotesk",sans-serif;font-size:.68rem;letter-spacing:.05em;color:var(--muted);padding:16px 12px 5px;display:block;border-top:1px solid var(--rule);margin-top:8px}
+.toc > ol > li:first-child .part{border-top:none;margin-top:0;padding-top:4px}
+
+/* ---- cross-link ---- */
+.xref{font-size:.93rem;color:var(--muted);border-left:2px solid var(--rule-strong);padding-left:12px;margin:16px 0}
+.xref a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <p class="kicker">Build guide &#183; companion to the architecture reference</p>
+      <h1>Building the marketplace, step by step</h1>
+      <p class="lede">Twenty-four steps from an empty folder to a deployed multi-tenant property platform: one Payload instance serving a public marketplace, a subdomain site for every business, and an admin panel that shows each owner only their own listings.</p>
+      <ul class="facts">
+        <li>pnpm + postgres</li>
+        <li>next.js app router</li>
+        <li>payload 3.x</li>
+        <li>follow in order</li>
+      </ul>
+    </div>
+    <div>
+<svg viewBox="0 0 460 292" role="img" aria-label="Six build stages from an empty folder to a deployed multi-tenant marketplace">
+ <g font-family="JetBrains Mono, monospace" font-size="10">
+  <line x1="14" y1="20" x2="14" y2="258" stroke="#33474c"/>
+  <g>
+    <circle cx="14" cy="20" r="5" fill="#7fbcd2"/>
+    <text x="34" y="17" fill="#fff" font-size="10.5">A &#183; Foundation</text>
+    <text x="34" y="31" fill="#7e969b" font-size="8.5">payload runs, first admin exists</text>
+  </g>
+  <g>
+    <circle cx="14" cy="68" r="5" fill="#7fbcd2"/>
+    <text x="34" y="65" fill="#fff" font-size="10.5">B &#183; Tenancy core</text>
+    <text x="34" y="79" fill="#7e969b" font-size="8.5">two businesses, already isolated</text>
+  </g>
+  <g>
+    <circle cx="14" cy="116" r="5" fill="#7fbcd2"/>
+    <text x="34" y="113" fill="#fff" font-size="10.5">C &#183; Domain data</text>
+    <text x="34" y="127" fill="#7e969b" font-size="8.5">properties, media, shared taxonomy</text>
+  </g>
+  <g>
+    <circle cx="14" cy="164" r="5" fill="#7fbcd2"/>
+    <text x="34" y="161" fill="#fff" font-size="10.5">D &#183; The marketplace</text>
+    <text x="34" y="175" fill="#7e969b" font-size="8.5">anyone browses every listing</text>
+  </g>
+  <g>
+    <circle cx="14" cy="212" r="5" fill="#7fbcd2"/>
+    <text x="34" y="209" fill="#fff" font-size="10.5">E &#183; Tenant sites</text>
+    <text x="34" y="223" fill="#7e969b" font-size="8.5">villa-lanka.marketplace.lk resolves</text>
+  </g>
+  <g>
+    <circle cx="14" cy="258" r="5" fill="#9dc7a4"/>
+    <text x="34" y="255" fill="#fff" font-size="10.5">F &#183; Customers and ship</text>
+    <text x="34" y="269" fill="#9dc7a4" font-size="8.5">enquiries, self-serve signup, deploy</text>
+  </g>
+ </g>
+</svg>
+</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" data-open="false">
+    <button class="navtoggle" type="button">Contents</button>
+    <p class="toc-title">The build</p>
+<ol>
+<li><span class="part">Foundation</span></li>
+<li><a href="#step-01"><span class="num">01</span>Prerequisites and ground rules</a>
+</li>
+<li><a href="#step-02"><span class="num">02</span>Scaffold the project</a>
+</li>
+<li><a href="#step-03"><span class="num">03</span>Environment and folder layout</a>
+</li>
+<li><a href="#step-04"><span class="num">04</span>First run and first admin</a>
+</li>
+<li><span class="part">Tenancy core</span></li>
+<li><a href="#step-05"><span class="num">05</span>Access helpers</a>
+</li>
+<li><a href="#step-06"><span class="num">06</span>The Tenants collection</a>
+</li>
+<li><a href="#step-07"><span class="num">07</span>The Users collection</a>
+</li>
+<li><a href="#step-08"><span class="num">08</span>Wire the plugin</a>
+</li>
+<li><a href="#step-09"><span class="num">09</span>Bootstrap and prove isolation</a>
+</li>
+<li><span class="part">Domain data</span></li>
+<li><a href="#step-10"><span class="num">10</span>Tenant-scoped media</a>
+</li>
+<li><a href="#step-11"><span class="num">11</span>Shared taxonomy</a>
+</li>
+<li><a href="#step-12"><span class="num">12</span>The Properties collection</a>
+</li>
+<li><a href="#step-13"><span class="num">13</span>Seed realistic data</a>
+</li>
+<li><a href="#step-14"><span class="num">14</span>Verify the boundary</a>
+</li>
+<li><span class="part">The public marketplace</span></li>
+<li><a href="#step-15"><span class="num">15</span>Route groups and the query layer</a>
+</li>
+<li><a href="#step-16"><span class="num">16</span>Browse every listing</a>
+</li>
+<li><a href="#step-17"><span class="num">17</span>The detail page</a>
+</li>
+<li><span class="part">Tenant sites</span></li>
+<li><a href="#step-18"><span class="num">18</span>Middleware and hostnames</a>
+</li>
+<li><a href="#step-19"><span class="num">19</span>Resolve and render a tenant site</a>
+</li>
+<li><a href="#step-20"><span class="num">20</span>Per-tenant site settings</a>
+</li>
+<li><span class="part">Customers, enquiries and shipping</span></li>
+<li><a href="#step-21"><span class="num">21</span>Customer accounts</a>
+</li>
+<li><a href="#step-22"><span class="num">22</span>Enquiries</a>
+</li>
+<li><a href="#step-23"><span class="num">23</span>Self-serve business signup</a>
+</li>
+<li><a href="#step-24"><span class="num">24</span>Ship it</a>
+</li>
+</ol>
+  </nav>
+  <main>
+<div class="part-head"><span class="part-letter">Part A</span><h2 class="part-title">Foundation</h2><p>A running Payload instance with Postgres, a super admin account and the folder layout the rest of the guide assumes. About an hour, most of it waiting on installs.</p></div>
+
+<section class="chapter step" id="step-01">
+<h2><span class="numeral">01</span>Prerequisites and ground rules</h2>
+<p class="goal">Goal: know what you are building, and have Node, pnpm and Postgres ready.</p>
+
+<p>This guide builds one thing: a property marketplace where <strong>you</strong> run the platform, <strong>businesses</strong> list properties from their own subdomain site, and <strong>anyone</strong> can browse every published listing from the main domain. Work through it in order &mdash; each step assumes the one before it.</p>
+
+<p class="xref">The companion <a href="payload-multitenant-architecture.html">architecture guide</a> explains <em>why</em> each piece looks the way it does. This one only explains what to type. Where a decision needs justifying, there is a link to the relevant chapter.</p>
+
+<h3 id="s1-need">What you need installed</h3>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Tool</th><th>Version</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Node.js</td><td>20.9+ or 22+</td><td>Payload 3 targets modern Node. Check with <code>node -v</code>.</td></tr>
+<tr><td>pnpm</td><td>9+</td><td>npm and yarn work too; every command below has a pnpm form.</td></tr>
+<tr><td>PostgreSQL</td><td>14+</td><td>Local install, Docker, or a hosted database. One empty database is enough.</td></tr>
+<tr><td>A domain</td><td>&mdash;</td><td>Only needed at step 24. Everything before that runs on <code>localhost</code>.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="s1-decide">Decisions this guide has already made for you</h3>
+<ul>
+  <li><strong>Postgres, not Mongo.</strong> Tenant scoping is a foreign key and a compound unique index; a relational database is the natural fit.</li>
+  <li><strong>Two auth collections.</strong> <code>users</code> for you and business owners, <code>customers</code> for the public. The reasoning is in the architecture guide.</li>
+  <li><strong>Subdomains, not paths.</strong> <code>villa-lanka.marketplace.lk</code> rather than <code>marketplace.lk/villa-lanka</code>. Custom domains come later and reuse the same resolver.</li>
+  <li><strong>Businesses use the Payload admin panel</strong> at first. Swapping in a custom dashboard later changes no access rules.</li>
+</ul>
+
+<h3 id="s1-names">Names used throughout</h3>
+<figure class="code "><div class="code-head"><span class="code-file">vocabulary</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">marketplace.lk              the root domain          NEXT_PUBLIC_ROOT_DOMAIN
+villa-lanka                 a tenant slug            tenants.slug
+users                       staff + business owners  admin.user collection
+customers                   the browsing public      separate auth collection
+properties                  the listings             tenant-scoped
+super-admin                 you                      users.roles
+tenant-admin                a business owner         users.tenants[].roles</code></pre></figure>
+<p>Substitute your own domain wherever <code>marketplace.lk</code> appears. Everything else can stay as written.</p>
+
+</section>
+
+<section class="chapter step" id="step-02">
+<h2><span class="numeral">02</span>Scaffold the project</h2>
+<p class="goal">Goal: a blank Payload app wired to Postgres, with the multi-tenant plugin installed.</p>
+<ul class="files"><li>src/payload.config.ts</li><li>package.json</li><li>.env</li></ul>
+
+<p>Scaffold a blank Payload project. The blank template gives you Payload mounted inside a Next.js app with nothing else to delete.</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">npx create-payload-app@latest marketplace -t blank
+cd marketplace</code></pre></figure>
+<p>Answer the prompts with <strong>Postgres</strong> as the database and paste your connection string when asked. If you prefer flags, <code>--db postgres</code> works on recent versions &mdash; the prompt is more reliable across releases.</p>
+<p>What you get:</p>
+<figure class="code tree"><div class="code-head"><span class="code-file">structure</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">marketplace/
+  src/
+    app/
+      (payload)/          # admin panel, REST, GraphQL - generated, don't edit
+        admin/[[...segments]]/page.tsx
+        api/[...slug]/route.ts
+      (frontend)/         # your site lives here
+        page.tsx
+        layout.tsx
+    collections/
+      Users.ts
+      Media.ts
+    payload.config.ts
+  .env
+  next.config.mjs
+  package.json</code></pre></figure>
+<p>Install the multi-tenant plugin now so it is there when the config needs it:</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm add @payloadcms/plugin-multi-tenant</code></pre></figure>
+<div class="call">
+<span class="label">Monorepo?</span>
+<p>If this app will sit in a Turborepo alongside a mobile client, scaffold it into <code>apps/web</code> and keep the commands below relative to that folder. Nothing in this guide depends on being at the repo root &mdash; only the <code>@payload-config</code> alias in <code>tsconfig.json</code> matters, and the scaffold sets it up.</p>
+</div>
+
+</section>
+
+<section class="chapter step" id="step-03">
+<h2><span class="numeral">03</span>Environment and folder layout</h2>
+<p class="goal">Goal: every hostname and secret in .env, and the folders the next twenty steps write into.</p>
+<ul class="files"><li>.env</li><li>src/</li></ul>
+
+<p>Replace the generated <code>.env</code> with the full set of variables this project needs. Four of them exist only to keep hostnames out of your code.</p>
+<figure class="code "><div class="code-head"><span class="code-file">.env</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">DATABASE_URI=postgres://postgres:postgres@127.0.0.1:5432/marketplace
+PAYLOAD_SECRET=change-me-to-something-long-and-random
+
+# where this app is reachable
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+
+# the root domain, minus protocol and port - middleware splits hostnames against it
+NEXT_PUBLIC_ROOT_DOMAIN=localhost
+
+# leave empty in development: browsers reject a Domain attribute on localhost
+COOKIE_DOMAIN=</code></pre></figure>
+<p>Now create the folders the rest of the guide writes into. Doing it once up front stops the import paths drifting:</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">mkdir -p src/access src/utilities src/lib \
+  src/collections/{Tenants,Users,Properties,Media,Enquiries,Customers,SiteSettings,Taxonomy} \
+  src/seed</code></pre></figure>
+<p>Each collection folder will hold an <code>index.ts</code> plus <code>access/</code> and <code>hooks/</code> subfolders as needed. Single-file collections are fine until the access rules arrive &mdash; and in a multi-tenant app they always arrive.</p>
+
+</section>
+
+<section class="chapter step" id="step-04">
+<h2><span class="numeral">04</span>First run and first admin</h2>
+<p class="goal">Goal: the panel loads, you have an account, and TypeScript types are generating.</p>
+<ul class="files"><li>src/payload-types.ts</li></ul>
+
+<p>Start the dev server. On first boot the Postgres adapter pushes the schema straight into your database &mdash; no migration needed yet.</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm dev</code></pre></figure>
+<p>Open <code>http://localhost:3000/admin</code>. Payload asks you to create the first user; that account becomes your platform admin. It has no <code>super-admin</code> role yet because the role does not exist &mdash; you add it in step 7 and grant it in step 9.</p>
+
+<p>Then generate types. Run this after <em>every</em> collection or field change from here on; the access functions in part B are typed against the output:</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm payload generate:types</code></pre></figure>
+<p>Add it to your scripts so it is one keystroke:</p>
+<figure class="code "><div class="code-head"><span class="code-file">package.json</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-json">{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "types": "payload generate:types",
+    "bootstrap": "payload run src/seed/bootstrap.ts",
+    "seed": "payload run src/seed/index.ts",
+    "migrate:create": "payload migrate:create",
+    "migrate": "payload migrate"
+  }
+}</code></pre></figure><div class="checkpoint"><span class="label">Checkpoint &mdash; Part A</span><ul><li><code>pnpm dev</code> starts without errors and <code>/admin</code> loads.</li><li>You can log in with the user you just created.</li><li><code>src/payload-types.ts</code> exists and contains a <code>User</code> interface.</li><li>Your Postgres database has <code>users</code>, <code>media</code> and <code>payload_*</code> tables.</li></ul></div>
+</section>
+
+<div class="part-head"><span class="part-letter">Part B</span><h2 class="part-title">Tenancy core</h2><p>The three pieces that make a tenant real: a Tenants collection, membership on users, and the plugin that ties them together. By the end of this part two businesses exist and neither can see the other.</p></div>
+
+<section class="chapter step" id="step-05">
+<h2><span class="numeral">05</span>Access helpers</h2>
+<p class="goal">Goal: isSuperAdmin, role-aware tenant lookup and the reserved-name list, ready to import.</p>
+<ul class="files"><li>src/access/isSuperAdmin.ts</li><li>src/utilities/getUserTenantIDs.ts</li><li>src/utilities/extractID.ts</li><li>src/lib/reserved.ts</li></ul>
+
+<p>Three small files that every access rule from here on imports. Write them first and the rest of the guide reads cleanly.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/utilities/extractID.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">/** Relationship fields arrive as an ID or a populated object, depending on depth. */
+export const extractID = &lt;T extends { id: number | string }&gt;(
+  objectOrID: T | T['id'],
+): T['id'] =&gt; (objectOrID &amp;&amp; typeof objectOrID === 'object' ? objectOrID.id : objectOrID)</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/access/isSuperAdmin.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Access } from 'payload'
+import type { User } from '@/payload-types'
+
+export const isSuperAdmin = (user: unknown): boolean =&gt;
+  Boolean((user as User | null)?.roles?.includes('super-admin'))
+
+export const isSuperAdminAccess: Access = ({ req }) =&gt; isSuperAdmin(req.user)</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/utilities/getUserTenantIDs.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Tenant, User } from '@/payload-types'
+import { extractID } from './extractID'
+
+export type TenantRole = 'tenant-admin' | 'tenant-viewer'
+
+/**
+ * Tenant IDs a user belongs to, optionally narrowed to one role.
+ * The plugin exports a version of this without role filtering - this one
+ * is what the access rules need.
+ */
+export const getUserTenantIDs = (
+  user: null | User,
+  role?: TenantRole,
+): Tenant['id'][] =&gt; {
+  if (!user) return []
+
+  return (user.tenants ?? []).reduce&lt;Tenant['id'][]&gt;((acc, row) =&gt; {
+    if (role &amp;&amp; !row.roles?.includes(role)) return acc
+    if (!row.tenant) return acc
+    acc.push(extractID(row.tenant))
+    return acc
+  }, [])
+}</code></pre></figure>
+<p>One more: the reserved subdomain list, in its own module because both a validation hook and the middleware will import it. Two copies of this list will drift, and the failure mode is a business owning <code>api.marketplace.lk</code>.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/lib/reserved.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">export const RESERVED_SUBDOMAINS = new Set([
+  'www', 'api', 'admin', 'app', 'cdn', 'static', 'assets', 'img', 'files',
+  'mail', 'smtp', 'ftp', 'blog', 'docs', 'status', 'dashboard', 'support',
+  'help', 'staging', 'dev', 'test', 'demo', 'billing', 'auth', 'login',
+])
+
+export const SUBDOMAIN_SHAPE = /^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$/</code></pre></figure>
+<p class="xref">Note the type error on <code>user.tenants</code> until step 8 &mdash; the field does not exist yet. It will resolve once the plugin is wired and you regenerate types.</p>
+
+</section>
+
+<section class="chapter step" id="step-06">
+<h2><span class="numeral">06</span>The Tenants collection</h2>
+<p class="goal">Goal: a business record with a validated subdomain, and a hard line between owner-editable and platform-only fields.</p>
+<ul class="files"><li>src/collections/Tenants/index.ts</li><li>access/tenantAdminUpdate.ts</li><li>hooks/validateSubdomain.ts</li></ul>
+
+<p>A tenant is a business. The plugin never defines these fields &mdash; every one of them is yours, and the split that matters is between what a business may edit about itself and what only you may change.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Tenants/hooks/validateSubdomain.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { FieldHook } from 'payload'
+import { ValidationError } from 'payload'
+import { RESERVED_SUBDOMAINS, SUBDOMAIN_SHAPE } from '@/lib/reserved'
+
+export const validateSubdomain: FieldHook = ({ value }) =&gt; {
+  const slug = String(value ?? '').toLowerCase().trim()
+
+  if (!SUBDOMAIN_SHAPE.test(slug)) {
+    throw new ValidationError({
+      errors: [{
+        path: 'slug',
+        message: 'Use 3-32 lowercase letters, numbers or dashes, starting and ending with a letter or number.',
+      }],
+    })
+  }
+
+  if (RESERVED_SUBDOMAINS.has(slug)) {
+    throw new ValidationError({
+      errors: [{ path: 'slug', message: `"${slug}" is reserved and cannot be used.` }],
+    })
+  }
+
+  return slug
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/collections/Tenants/access/tenantAdminUpdate.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Access } from 'payload'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+
+/** A tenant-admin may edit their own business. Nobody else may edit any. */
+export const tenantAdminUpdate: Access = ({ req }) =&gt; {
+  if (!req.user || req.user.collection !== 'users') return false
+  if (isSuperAdmin(req.user)) return true
+
+  const manageable = getUserTenantIDs(req.user, 'tenant-admin')
+  if (manageable.length === 0) return false
+
+  return { id: { in: manageable } }
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/collections/Tenants/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+import { isSuperAdmin, isSuperAdminAccess } from '@/access/isSuperAdmin'
+import { tenantAdminUpdate } from './access/tenantAdminUpdate'
+import { validateSubdomain } from './hooks/validateSubdomain'
+
+export const Tenants: CollectionConfig = {
+  slug: 'tenants',
+  admin: { useAsTitle: 'name', group: 'Platform', defaultColumns: ['name', 'slug', 'status'] },
+  access: {
+    create: isSuperAdminAccess,
+    read: () =&gt; true,              // public: tenant sites render business profiles
+    update: tenantAdminUpdate,
+    delete: isSuperAdminAccess,    // deleting a tenant deletes its documents
+  },
+  fields: [
+    { name: 'name', type: 'text', required: true },
+    {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      unique: true,
+      index: true,
+      admin: { description: 'Becomes {slug}.marketplace.lk' },
+      hooks: { beforeValidate: [validateSubdomain] },
+    },
+    {
+      name: 'customDomain',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: { position: 'sidebar', description: 'Optional. Set by the platform only.' },
+      access: { update: ({ req }) =&gt; isSuperAdmin(req.user) },
+    },
+    {
+      name: 'status',
+      type: 'select',
+      required: true,
+      defaultValue: 'pending',
+      index: true,
+      options: ['pending', 'active', 'suspended'],
+      admin: { position: 'sidebar' },
+      access: { update: ({ req }) =&gt; isSuperAdmin(req.user) },
+    },
+    {
+      name: 'plan',
+      type: 'select',
+      defaultValue: 'free',
+      options: ['free', 'pro'],
+      admin: { position: 'sidebar' },
+      access: {
+        read: ({ req }) =&gt; Boolean(req.user),
+        update: ({ req }) =&gt; isSuperAdmin(req.user),
+      },
+    },
+    {
+      type: 'group',
+      name: 'brand',
+      fields: [
+        { name: 'tagline', type: 'text' },
+        { name: 'accent', type: 'text', defaultValue: '#15596b' },
+      ],
+    },
+    {
+      type: 'group',
+      name: 'contact',
+      fields: [
+        { name: 'whatsapp', type: 'text' },
+        { name: 'email', type: 'email' },
+        { name: 'city', type: 'text' },
+      ],
+    },
+  ],
+}</code></pre></figure>
+<div class="call warn">
+<span class="label">Why status and plan are field-locked</span>
+<p>A business owner can edit their own tenant document &mdash; that is how they change their tagline and contact details. Without the field-level <code>access.update</code> on <code>status</code> and <code>plan</code>, the same request could also flip them from <code>pending</code> to <code>active</code>, or from free to pro.</p>
+</div>
+<p>The <code>brand.logo</code> upload field is deliberately missing: <code>media</code> becomes tenant-scoped in step 10, and adding the relationship before then creates a circular ordering problem. You add it at the end of that step.</p>
+
+</section>
+
+<section class="chapter step" id="step-07">
+<h2><span class="numeral">07</span>The Users collection</h2>
+<p class="goal">Goal: staff and business owners in one collection, with membership rows that carry a role.</p>
+<ul class="files"><li>src/collections/Users/index.ts</li><li>access/create.ts</li><li>access/read.ts</li><li>access/updateAndDelete.ts</li><li>access/isAccessingSelf.ts</li></ul>
+
+<p>Replace the generated <code>src/collections/Users.ts</code> with a folder. Four access files, then the collection itself.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Users/access/isAccessingSelf.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { User } from '@/payload-types'
+
+export const isAccessingSelf = ({ id, user }: { id?: number | string; user: User }) =&gt;
+  Boolean(id &amp;&amp; user.id === id)</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/collections/Users/access/create.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Access } from 'payload'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+import { extractID } from '@/utilities/extractID'
+
+/** Super admins create anyone. Tenant-admins create users inside their own tenants. */
+export const createAccess: Access = ({ req }) =&gt; {
+  const { user } = req
+  if (!user || user.collection !== 'users') return false
+  if (isSuperAdmin(user)) return true
+
+  // nobody but a super admin may mint a super admin
+  if (req.data?.roles?.includes('super-admin')) return false
+
+  const manageable = getUserTenantIDs(user, 'tenant-admin')
+  if (manageable.length === 0) return false
+
+  const requested: (number | string)[] =
+    req.data?.tenants?.map((row: { tenant: unknown }) =&gt; extractID(row.tenant as never)) ?? []
+
+  return requested.length &gt; 0 &amp;&amp; requested.every((id) =&gt; manageable.includes(id))
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/collections/Users/access/read.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Access, Where } from 'payload'
+import { getTenantFromCookie } from '@payloadcms/plugin-multi-tenant/utilities'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+import { isAccessingSelf } from './isAccessingSelf'
+
+export const readAccess: Access = ({ req, id }) =&gt; {
+  const { user } = req
+  if (!user || user.collection !== 'users') return false
+  if (isAccessingSelf({ id, user })) return true
+
+  const superAdmin = isSuperAdmin(user)
+  const selected = getTenantFromCookie(req.headers, req.payload.db.defaultIDType)
+  const manageable = getUserTenantIDs(user, 'tenant-admin')
+
+  // viewing one tenant in the panel: scope the user list to it
+  if (selected &amp;&amp; (superAdmin || manageable.includes(selected))) {
+    return { 'tenants.tenant': { equals: selected } }
+  }
+
+  if (superAdmin) return true
+
+  return {
+    or: [
+      { id: { equals: user.id } },
+      { 'tenants.tenant': { in: manageable } },
+    ],
+  } as Where
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/collections/Users/access/updateAndDelete.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Access } from 'payload'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+import { isAccessingSelf } from './isAccessingSelf'
+
+export const updateAndDeleteAccess: Access = ({ req, id }) =&gt; {
+  const { user } = req
+  if (!user || user.collection !== 'users') return false
+  if (isSuperAdmin(user)) return true
+  if (isAccessingSelf({ id, user })) return true
+
+  const manageable = getUserTenantIDs(user, 'tenant-admin')
+  if (manageable.length === 0) return false
+
+  return { 'tenants.tenant': { in: manageable } }
+}</code></pre></figure>
+<p>Now the collection. The membership array comes from the plugin's <code>tenantsArrayField</code> export so you can attach a role to each row &mdash; the default field has no roles.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Users/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+import { tenantsArrayField } from '@payloadcms/plugin-multi-tenant/fields'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { createAccess } from './access/create'
+import { readAccess } from './access/read'
+import { updateAndDeleteAccess } from './access/updateAndDelete'
+
+const membership = tenantsArrayField({
+  tenantsArrayFieldName: 'tenants',
+  tenantsArrayTenantFieldName: 'tenant',
+  tenantsCollectionSlug: 'tenants',
+  arrayFieldAccess: {},
+  tenantFieldAccess: {},
+  rowFields: [
+    {
+      name: 'roles',
+      type: 'select',
+      hasMany: true,
+      required: true,
+      defaultValue: ['tenant-viewer'],
+      options: ['tenant-admin', 'tenant-viewer'],
+    },
+  ],
+})
+
+export const Users: CollectionConfig = {
+  slug: 'users',
+  auth: {
+    tokenExpiration: 60 * 60 * 8,
+    maxLoginAttempts: 10,
+    lockTime: 10 * 60 * 1000,
+    cookies: {
+      domain: process.env.COOKIE_DOMAIN || undefined,
+      sameSite: 'Lax',
+      secure: process.env.NODE_ENV === 'production',
+    },
+  },
+  admin: { useAsTitle: 'email', group: 'Platform' },
+  access: {
+    create: createAccess,
+    read: readAccess,
+    update: updateAndDeleteAccess,
+    delete: updateAndDeleteAccess,
+    admin: ({ req }) =&gt; Boolean(req.user),   // customers live in another collection
+  },
+  fields: [
+    { name: 'name', type: 'text' },
+    {
+      name: 'roles',
+      type: 'select',
+      hasMany: true,
+      defaultValue: ['user'],
+      options: ['super-admin', 'user'],
+      admin: { position: 'sidebar' },
+      access: { update: ({ req }) =&gt; isSuperAdmin(req.user) },
+    },
+    { ...membership, admin: { ...(membership.admin || {}), position: 'sidebar' } },
+  ],
+}</code></pre></figure>
+<div class="call danger">
+<span class="label">The single most important line</span>
+<p><code>access: { update: ({ req }) =&gt; isSuperAdmin(req.user) }</code> on the <code>roles</code> field. Without it, any business owner can PATCH their own user document and become a platform admin. Field-level access is what stops it &mdash; collection-level <code>update</code> already allows them to edit themselves.</p>
+</div>
+
+</section>
+
+<section class="chapter step" id="step-08">
+<h2><span class="numeral">08</span>Wire the plugin</h2>
+<p class="goal">Goal: the plugin active, membership on users, and the tenant selector in the admin nav.</p>
+<ul class="files"><li>src/payload.config.ts</li></ul>
+
+<p>Delete the generated <code>src/collections/Users.ts</code> &mdash; the folder from step 7 replaces it &mdash; and rewrite the config.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/payload.config.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { postgresAdapter } from '@payloadcms/db-postgres'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { multiTenantPlugin } from '@payloadcms/plugin-multi-tenant'
+import path from 'path'
+import { buildConfig } from 'payload'
+import { fileURLToPath } from 'url'
+import sharp from 'sharp'
+
+import { Media } from './collections/Media'
+import { Tenants } from './collections/Tenants'
+import { Users } from './collections/Users'
+import { isSuperAdmin } from './access/isSuperAdmin'
+import { getUserTenantIDs } from './utilities/getUserTenantIDs'
+import type { Config } from './payload-types'
+
+const filename = fileURLToPath(import.meta.url)
+const dirname = path.dirname(filename)
+
+export default buildConfig({
+  admin: {
+    user: 'users',      // the collection the plugin treats as tenant members
+    importMap: { baseDir: path.resolve(dirname) },
+  },
+  collections: [Users, Tenants, Media],
+  db: postgresAdapter({ pool: { connectionString: process.env.DATABASE_URI } }),
+  editor: lexicalEditor({}),
+  secret: process.env.PAYLOAD_SECRET as string,
+  sharp,
+  typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
+  cors: [process.env.NEXT_PUBLIC_SERVER_URL as string],
+  csrf: [process.env.NEXT_PUBLIC_SERVER_URL as string],
+  plugins: [
+    multiTenantPlugin&lt;Config&gt;({
+      collections: {
+        media: {},
+      },
+      userHasAccessToAllTenants: (user) =&gt; isSuperAdmin(user),
+      tenantField: {
+        access: {
+          read: () =&gt; true,
+          update: ({ req }) =&gt; isSuperAdmin(req.user) || getUserTenantIDs(req.user).length &gt; 0,
+        },
+      },
+      tenantsArrayField: { includeDefaultField: false },   // step 7 placed it manually
+      debug: process.env.NODE_ENV === 'development',
+    }),
+  ],
+})</code></pre></figure>
+<p>Restart the dev server and regenerate types. The <code>user.tenants</code> errors from step 5 disappear:</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm payload generate:types</code></pre></figure>
+<div class="call">
+<span class="label">Three lines doing the heavy lifting</span>
+<p><code>admin.user: 'users'</code> tells the plugin which collection carries membership. <code>userHasAccessToAllTenants</code> is the only thing that lets anyone see across tenants. <code>debug: true</code> reveals the injected <code>tenant</code> field in the panel while you build &mdash; watching which document lands in which tenant teaches the model faster than reading about it.</p>
+</div>
+<p class="xref">What the plugin does to your access functions once wired: <a href="payload-multitenant-architecture.html#a-pipeline">architecture guide &sect;5.1</a>.</p>
+
+</section>
+
+<section class="chapter step" id="step-09">
+<h2><span class="numeral">09</span>Bootstrap and prove isolation</h2>
+<p class="goal">Goal: you are a super admin, two businesses exist with one owner each, and neither owner can reach the other.</p>
+<ul class="files"><li>src/seed/bootstrap.ts</li></ul>
+
+<p>There is a chicken-and-egg problem here worth naming: the <code>roles</code> field can only be updated by a super admin, and you are not one yet. No amount of clicking in the panel will fix that. Bootstrap it with a script instead, which also creates two businesses to test isolation against.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/seed/bootstrap.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { getPayload } from 'payload'
+import config from '@payload-config'
+
+const SUPER_ADMIN_EMAIL = 'you@example.com'   // the account you created in step 4
+
+const bootstrap = async () =&gt; {
+  const payload = await getPayload({ config })
+
+  // 1. promote yourself - overrideAccess skips the field-level rule
+  const { docs: existing } = await payload.find({
+    collection: 'users',
+    where: { email: { equals: SUPER_ADMIN_EMAIL } },
+    limit: 1,
+  })
+
+  if (!existing[0]) throw new Error(`No user found for ${SUPER_ADMIN_EMAIL}`)
+
+  await payload.update({
+    collection: 'users',
+    id: existing[0].id,
+    data: { roles: ['super-admin'] },
+    overrideAccess: true,
+  })
+
+  // 2. two businesses
+  const [villa, haputale] = await Promise.all([
+    payload.create({
+      collection: 'tenants',
+      data: { name: 'Villa Lanka', slug: 'villa-lanka', status: 'active' },
+      overrideAccess: true,
+    }),
+    payload.create({
+      collection: 'tenants',
+      data: { name: 'Haputale Stays', slug: 'haputale-stays', status: 'active' },
+      overrideAccess: true,
+    }),
+  ])
+
+  // 3. one owner each
+  await payload.create({
+    collection: 'users',
+    data: {
+      email: 'owner@villalanka.test',
+      password: 'test1234',
+      name: 'Villa Lanka Owner',
+      roles: ['user'],
+      tenants: [{ tenant: villa.id, roles: ['tenant-admin'] }],
+    },
+    overrideAccess: true,
+  })
+
+  await payload.create({
+    collection: 'users',
+    data: {
+      email: 'owner@haputale.test',
+      password: 'test1234',
+      name: 'Haputale Owner',
+      roles: ['user'],
+      tenants: [{ tenant: haputale.id, roles: ['tenant-admin'] }],
+    },
+    overrideAccess: true,
+  })
+
+  console.log('Bootstrapped. Super admin:', SUPER_ADMIN_EMAIL)
+  process.exit(0)
+}
+
+await bootstrap()</code></pre></figure><figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm payload run src/seed/bootstrap.ts</code></pre></figure>
+<p>Now verify the isolation by hand &mdash; this is the first moment the whole model is testable:</p>
+<ol>
+  <li>Log in as <code>owner@villalanka.test</code>. The tenant selector shows <strong>Villa Lanka only</strong>.</li>
+  <li>The Tenants list shows one row. The Users list shows one user.</li>
+  <li>Log in as yourself. The selector lists both businesses and switching filters the panel.</li>
+  <li>As the Villa Lanka owner, request the other tenant by ID directly and confirm the refusal:</li>
+</ol>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash"># log in and keep the cookie
+curl -s -c /tmp/villa.txt -X POST http://localhost:3000/api/users/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"owner@villalanka.test","password":"test1234"}' &gt; /dev/null
+
+# their own tenant: 200
+curl -s -b /tmp/villa.txt "http://localhost:3000/api/tenants?where[slug][equals]=villa-lanka" | head -c 200
+
+# the other business, by ID: expect an empty result or 403 on write
+curl -s -b /tmp/villa.txt -X PATCH "http://localhost:3000/api/tenants/&lt;haputale-id&gt;" \
+  -H 'Content-Type: application/json' -d '{"name":"Hijacked"}'</code></pre></figure><div class="checkpoint"><span class="label">Checkpoint &mdash; Part B</span><ul><li>You hold <code>super-admin</code> and see both businesses in the tenant selector.</li><li>Each owner sees exactly one business and one user.</li><li>A PATCH from one owner to the other's tenant is refused.</li><li>Regenerating types produces a <code>tenants</code> array on the <code>User</code> interface.</li></ul></div>
+<div class="call warn">
+<span class="label">If an owner sees an empty panel</span>
+<p>Their tenants array is empty, or its rows have no <code>tenant</code> set. A user in the admin collection with no membership is denied every tenant-scoped operation by design &mdash; check the sidebar on their user document before debugging anything else.</p>
+</div>
+
+</section>
+
+<div class="part-head"><span class="part-letter">Part C</span><h2 class="part-title">Domain data</h2><p>The listings themselves, the photos that belong to a business, and the taxonomy that deliberately does not. This is where the tenant boundary gets its real test.</p></div>
+
+<section class="chapter step" id="step-10">
+<h2><span class="numeral">10</span>Tenant-scoped media</h2>
+<p class="goal">Goal: uploads that belong to one business, with sizes generated and a logo field on tenants.</p>
+<ul class="files"><li>src/collections/Media/index.ts</li><li>src/collections/Tenants/index.ts</li></ul>
+
+<p>Media is the collection people forget to scope, and the symptom is ugly: one business browsing another's photo library in the upload picker. It is already in the plugin's <code>collections</code> map from step 8 &mdash; now give it a real config.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Media/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+
+const dirname = path.dirname(fileURLToPath(import.meta.url))
+
+export const Media: CollectionConfig = {
+  slug: 'media',
+  upload: {
+    staticDir: path.resolve(dirname, '../../../public/media'),
+    mimeTypes: ['image/*'],
+    focalPoint: true,
+    imageSizes: [
+      { name: 'thumbnail', width: 480, height: 320, position: 'centre' },
+      { name: 'card', width: 900, height: 600, position: 'centre' },
+      { name: 'hero', width: 1800 },
+    ],
+  },
+  access: {
+    read: () =&gt; true,                       // images are served publicly
+    create: ({ req }) =&gt; req.user?.collection === 'users',
+    update: ({ req }) =&gt; {
+      if (!req.user || req.user.collection !== 'users') return false
+      if (isSuperAdmin(req.user)) return true
+      return { tenant: { in: getUserTenantIDs(req.user, 'tenant-admin') } }
+    },
+    delete: ({ req }) =&gt; {
+      if (!req.user || req.user.collection !== 'users') return false
+      if (isSuperAdmin(req.user)) return true
+      return { tenant: { in: getUserTenantIDs(req.user, 'tenant-admin') } }
+    },
+  },
+  fields: [
+    { name: 'alt', type: 'text', required: true },
+  ],
+}</code></pre></figure>
+<p>Now close the loop on step 6 by adding the logo field to Tenants, which was waiting for this collection to be scoped:</p>
+<figure class="code "><div class="code-head"><span class="code-file">ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">// src/collections/Tenants/index.ts - inside the brand group
+{
+  type: 'group',
+  name: 'brand',
+  fields: [
+    { name: 'logo', type: 'upload', relationTo: 'media' },
+    { name: 'tagline', type: 'text' },
+    { name: 'accent', type: 'text', defaultValue: '#15596b' },
+  ],
+},</code></pre></figure>
+<div class="call">
+<span class="label">Local disk now, object storage later</span>
+<p><code>staticDir</code> writes into <code>public/media</code>, which is fine on one server and wrong the moment you run two. Swapping in <code>@payloadcms/storage-s3</code> is a config change and does not touch the access rules &mdash; leave it until deployment matters.</p>
+</div>
+
+</section>
+
+<section class="chapter step" id="step-11">
+<h2><span class="numeral">11</span>Shared taxonomy</h2>
+<p class="goal">Goal: one vocabulary for the whole marketplace, editable only by you.</p>
+<ul class="files"><li>src/collections/Taxonomy/index.ts</li><li>src/payload.config.ts</li></ul>
+
+<p>Property types, amenities and districts are shared across the whole marketplace. If each business invented its own list, cross-tenant filtering would be impossible &mdash; "3 bedroom cabins in Ella" only works if everyone uses the same <em>Ella</em>.</p>
+<p>The three collections are identical in shape, so build them from one factory:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Taxonomy/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+import { isSuperAdmin, isSuperAdminAccess } from '@/access/isSuperAdmin'
+
+/** Marketplace-wide vocabulary: readable by everyone, editable by the platform. */
+export const taxonomy = (slug: string, singular: string): CollectionConfig =&gt; ({
+  slug,
+  admin: {
+    useAsTitle: 'name',
+    group: 'Platform',
+    // tidy the nav for business users - not a security boundary
+    hidden: ({ user }) =&gt; !isSuperAdmin(user),
+  },
+  access: {
+    read: () =&gt; true,
+    create: isSuperAdminAccess,
+    update: isSuperAdminAccess,
+    delete: isSuperAdminAccess,
+  },
+  labels: { singular, plural: `${singular}s` },
+  fields: [
+    { name: 'name', type: 'text', required: true },
+    { name: 'slug', type: 'text', required: true, unique: true, index: true },
+  ],
+})
+
+export const PropertyTypes = taxonomy('property-types', 'Property type')
+export const Amenities = taxonomy('amenities', 'Amenity')
+export const Districts = taxonomy('districts', 'District')</code></pre></figure>
+<p>Register all three in the config &mdash; and note they are <strong>not</strong> added to the plugin's <code>collections</code> map. That is the whole point.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/payload.config.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { Amenities, Districts, PropertyTypes } from './collections/Taxonomy'
+
+collections: [Users, Tenants, Media, PropertyTypes, Amenities, Districts],</code></pre></figure>
+<div class="call warn">
+<span class="label">hidden is cosmetic</span>
+<p><code>admin.hidden</code> removes a collection from the nav. It does nothing to <code>/api/property-types</code>. The <code>access</code> block above is the actual boundary &mdash; write both, every time.</p>
+</div>
+
+</section>
+
+<section class="chapter step" id="step-12">
+<h2><span class="numeral">12</span>The Properties collection</h2>
+<p class="goal">Goal: listings with drafts, per-tenant slugs, and access that separates seeing from editing.</p>
+<ul class="files"><li>src/collections/Properties/index.ts</li><li>access.ts</li><li>hooks/ensureUniqueSlug.ts</li><li>hooks/forceTenant.ts</li></ul>
+
+<p>The centrepiece. Two hooks and three access functions, then the collection.</p>
+
+<h3 id="s12-access">Access</h3>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Properties/access.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Access } from 'payload'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+import { extractID } from '@/utilities/extractID'
+
+/** Anyone may read published listings belonging to an active business. */
+export const canReadProperty: Access = ({ req }) =&gt; {
+  if (req.user?.collection === 'users') return true   // plugin narrows to their tenants
+
+  return {
+    and: [
+      { _status: { equals: 'published' } },
+      { 'tenant.status': { equals: 'active' } },
+    ],
+  }
+}
+
+/**
+ * Create access is a yes/no - a where returned here cannot restrict which
+ * tenant the request names, so the incoming data is checked directly.
+ */
+export const canCreateProperty: Access = ({ req }) =&gt; {
+  const { user } = req
+  if (!user || user.collection !== 'users') return false
+  if (isSuperAdmin(user)) return true
+
+  const manageable = getUserTenantIDs(user, 'tenant-admin')
+  if (manageable.length === 0) return false
+
+  const requested = req.data?.tenant ? extractID(req.data.tenant) : undefined
+  if (!requested) return true   // the field's defaultValue resolves it from the cookie
+
+  return manageable.includes(requested)
+}
+
+/** Editing and deleting: tenant-admins, within their own tenants. */
+export const canMutateProperty: Access = ({ req }) =&gt; {
+  const { user } = req
+  if (!user || user.collection !== 'users') return false
+  if (isSuperAdmin(user)) return true
+
+  const manageable = getUserTenantIDs(user, 'tenant-admin')
+  if (manageable.length === 0) return false
+
+  return { tenant: { in: manageable } }
+}</code></pre></figure>
+<h3 id="s12-hooks">Hooks</h3>
+<p>The first keeps slugs unique per business rather than globally. The second stops an API client naming someone else's tenant.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Properties/hooks/ensureUniqueSlug.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { FieldHook, Where } from 'payload'
+import { ValidationError } from 'payload'
+import { extractID } from '@/utilities/extractID'
+
+export const ensureUniqueSlug: FieldHook = async ({ data, originalDoc, req, value }) =&gt; {
+  if (originalDoc?.slug === value) return value
+
+  const tenantID = data?.tenant ? extractID(data.tenant)
+    : originalDoc?.tenant ? extractID(originalDoc.tenant)
+    : undefined
+
+  const constraints: Where[] = [{ slug: { equals: value } }]
+  if (tenantID) constraints.push({ tenant: { equals: tenantID } })
+  if (originalDoc?.id) constraints.push({ id: { not_equals: originalDoc.id } })
+
+  const duplicates = await req.payload.find({
+    collection: 'properties',
+    depth: 0,
+    limit: 1,
+    pagination: false,
+    where: { and: constraints },
+  })
+
+  if (duplicates.docs.length &gt; 0) {
+    throw new ValidationError({
+      errors: [{ path: 'slug', message: `You already have a property using "${value}".` }],
+    })
+  }
+
+  return value
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/collections/Properties/hooks/forceTenant.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionBeforeValidateHook } from 'payload'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+
+/** A single-tenant user never gets to choose which business a listing belongs to. */
+export const forceTenant: CollectionBeforeValidateHook = ({ data, operation, req }) =&gt; {
+  if (operation !== 'create' || !data) return data
+
+  const { user } = req
+  if (!user || user.collection !== 'users' || isSuperAdmin(user)) return data
+
+  const manageable = getUserTenantIDs(user, 'tenant-admin')
+  if (manageable.length === 1) return { ...data, tenant: manageable[0] }
+
+  return data
+}</code></pre></figure>
+<h3 id="s12-collection">The collection</h3>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Properties/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+import { canCreateProperty, canMutateProperty, canReadProperty } from './access'
+import { ensureUniqueSlug } from './hooks/ensureUniqueSlug'
+import { forceTenant } from './hooks/forceTenant'
+
+export const Properties: CollectionConfig = {
+  slug: 'properties',
+  admin: {
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'price', 'district', '_status'],
+  },
+  versions: { drafts: true },                 // adds _status: draft | published
+  indexes: [{ fields: ['tenant', 'slug'], unique: true }],
+  access: {
+    create: canCreateProperty,
+    read: canReadProperty,
+    update: canMutateProperty,
+    delete: canMutateProperty,
+  },
+  hooks: { beforeValidate: [forceTenant] },
+  fields: [
+    { name: 'title', type: 'text', required: true },
+    {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      index: true,
+      disableUnique: true,                    // unique per tenant, via the index above
+      hooks: { beforeValidate: [ensureUniqueSlug] },
+    },
+    { name: 'description', type: 'richText' },
+    {
+      type: 'row',
+      fields: [
+        { name: 'price', type: 'number', required: true, min: 0 },
+        { name: 'currency', type: 'select', defaultValue: 'LKR', options: ['LKR', 'USD'] },
+        { name: 'sleeps', type: 'number', min: 1 },
+      ],
+    },
+    { name: 'propertyType', type: 'relationship', relationTo: 'property-types', required: true },
+    { name: 'district', type: 'relationship', relationTo: 'districts', index: true, required: true },
+    { name: 'amenities', type: 'relationship', relationTo: 'amenities', hasMany: true },
+    { name: 'location', type: 'point' },
+    {
+      name: 'gallery',
+      type: 'array',
+      minRows: 1,
+      fields: [
+        { name: 'image', type: 'upload', relationTo: 'media', required: true },
+        { name: 'caption', type: 'text' },
+      ],
+    },
+    { name: 'featured', type: 'checkbox', defaultValue: false, admin: { position: 'sidebar' } },
+    { name: 'publishedAt', type: 'date', admin: { position: 'sidebar' } },
+  ],
+}</code></pre></figure>
+<p>Register it in both places &mdash; the collections array and the plugin map. Forgetting the second is the most common mistake in this whole build; the collection works, it just silently has no tenant:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/payload.config.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">collections: [Users, Tenants, Properties, Media, PropertyTypes, Amenities, Districts],
+
+plugins: [
+  multiTenantPlugin&lt;Config&gt;({
+    collections: {
+      properties: {},     // &lt;- this line
+      media: {},
+    },
+    // ...
+  }),
+],</code></pre></figure><figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm payload generate:types</code></pre></figure>
+</section>
+
+<section class="chapter step" id="step-13">
+<h2><span class="numeral">13</span>Seed realistic data</h2>
+<p class="goal">Goal: two businesses with listings, including a deliberate slug collision and a draft.</p>
+<ul class="files"><li>src/seed/index.ts</li></ul>
+
+<p>Hand-clicking test data gets old by the third listing. Extend the seed to fill the taxonomy and give each business a few properties &mdash; deliberately with one slug that collides across tenants, so the uniqueness rule gets exercised.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/seed/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { getPayload } from 'payload'
+import config from '@payload-config'
+
+const seed = async () =&gt; {
+  const payload = await getPayload({ config })
+
+  const districts = await Promise.all(
+    [['Ella', 'ella'], ['Haputale', 'haputale'], ['Nuwara Eliya', 'nuwara-eliya']].map(
+      ([name, slug]) =&gt;
+        payload.create({ collection: 'districts', data: { name, slug }, overrideAccess: true }),
+    ),
+  )
+
+  const [cabin] = await Promise.all(
+    [['Cabin', 'cabin'], ['Villa', 'villa'], ['Bungalow', 'bungalow']].map(([name, slug]) =&gt;
+      payload.create({ collection: 'property-types', data: { name, slug }, overrideAccess: true }),
+    ),
+  )
+
+  const { docs: tenants } = await payload.find({
+    collection: 'tenants',
+    limit: 10,
+    overrideAccess: true,
+  })
+
+  for (const tenant of tenants) {
+    // the same slug under two different businesses - this must NOT collide
+    await payload.create({
+      collection: 'properties',
+      data: {
+        tenant: tenant.id,
+        title: `Misty Cabin (${tenant.name})`,
+        slug: 'misty-cabin',
+        price: 12500,
+        currency: 'LKR',
+        sleeps: 4,
+        propertyType: cabin.id,
+        district: districts[0].id,
+        publishedAt: new Date().toISOString(),
+        _status: 'published',
+      },
+      overrideAccess: true,
+    })
+
+    await payload.create({
+      collection: 'properties',
+      data: {
+        tenant: tenant.id,
+        title: `Tea Estate Bungalow (${tenant.name})`,
+        slug: 'tea-estate-bungalow',
+        price: 24000,
+        currency: 'LKR',
+        sleeps: 8,
+        propertyType: cabin.id,
+        district: districts[1].id,
+        _status: 'draft',        // one draft each, to prove the public filter works
+      },
+      overrideAccess: true,
+    })
+  }
+
+  console.log(`Seeded ${tenants.length} tenants with listings.`)
+  process.exit(0)
+}
+
+await seed()</code></pre></figure><figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm payload run src/seed/index.ts</code></pre></figure>
+<p>Gallery images are omitted here because seeding uploads needs real files &mdash; drop <code>minRows: 1</code> from the gallery field while seeding, or upload one image by hand and reference its ID.</p>
+
+</section>
+
+<section class="chapter step" id="step-14">
+<h2><span class="numeral">14</span>Verify the boundary</h2>
+<p class="goal">Goal: proof, before any UI exists, that a business cannot read or write another's data.</p>
+
+<p>Everything through part C is backend. Before building any UI, confirm the boundary holds &mdash; a bug found here costs minutes, the same bug found after the frontend exists costs an afternoon.</p>
+
+<h4>In the panel</h4>
+<ol>
+  <li>As the Villa Lanka owner, the Properties list shows only their two listings.</li>
+  <li>Creating a property auto-fills the tenant (visible because <code>debug</code> is on) and never offers the other business.</li>
+  <li>Saving a second listing with the slug <code>misty-cabin</code> inside the <em>same</em> business fails with your validation message.</li>
+  <li>Both businesses owning a <code>misty-cabin</code> is fine.</li>
+</ol>
+
+<h4>Over the API</h4>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash"># anonymous: published listings from active tenants only - drafts must not appear
+curl -s "http://localhost:3000/api/properties?limit=50" | grep -c '"_status":"draft"'
+# expect 0
+
+# as the Villa Lanka owner: only their own documents
+curl -s -c /tmp/villa.txt -X POST http://localhost:3000/api/users/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"owner@villalanka.test","password":"test1234"}' &gt; /dev/null
+
+curl -s -b /tmp/villa.txt "http://localhost:3000/api/properties?limit=50&amp;depth=0"
+# every doc's tenant is the Villa Lanka id
+
+# writing to the other business by ID: expect 403 / not found
+curl -s -b /tmp/villa.txt -X PATCH "http://localhost:3000/api/properties/&lt;haputale-property-id&gt;" \
+  -H 'Content-Type: application/json' -d '{"title":"Hijacked"}'</code></pre></figure><div class="checkpoint"><span class="label">Checkpoint &mdash; Part C</span><ul><li>Anonymous reads return published listings only, and never a draft.</li><li>Each owner's property list contains only their own documents.</li><li>A cross-tenant PATCH is refused.</li><li>The same slug exists under both businesses without conflict.</li></ul></div>
+<p class="xref">If an anonymous read returns drafts, <code>canReadProperty</code> is returning <code>true</code> for everyone &mdash; the plugin adds no constraint for unauthenticated requests. <a href="payload-multitenant-architecture.html#a-who">Architecture guide &sect;5.2</a> has the table of who gets filtered.</p>
+
+</section>
+
+<div class="part-head"><span class="part-letter">Part D</span><h2 class="part-title">The public marketplace</h2><p>The apex domain: anyone can browse every published listing from every active business, filter it, and click through to a detail page. All of it anonymous, so all of it leaning on the access rules from part C.</p></div>
+
+<section class="chapter step" id="step-15">
+<h2><span class="numeral">15</span>Route groups and the query layer</h2>
+<p class="goal">Goal: a marketplace route group and one module that every page queries through.</p>
+<ul class="files"><li>src/app/(marketplace)/</li><li>src/lib/payload.ts</li><li>src/lib/properties.ts</li></ul>
+
+<p>Restructure the app directory into three groups. The <code>(payload)</code> group is generated and untouched; <code>(marketplace)</code> is the apex site; <code>sites</code> is where subdomain requests get rewritten in part E.</p>
+<figure class="code tree"><div class="code-head"><span class="code-file">structure</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">src/app/
+  (payload)/                     # generated - leave alone
+  (marketplace)/
+    layout.tsx
+    page.tsx
+    properties/
+      page.tsx                   # browse everything
+      [tenantSlug]/[slug]/page.tsx
+  sites/                         # created in part E</code></pre></figure>
+<p>Rename the generated <code>(frontend)</code> group to <code>(marketplace)</code> and delete its placeholder content. Then two small helpers &mdash; one to get a Payload instance, one to read the current visitor:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/lib/payload.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { getPayload } from 'payload'
+import { headers as nextHeaders } from 'next/headers'
+import config from '@payload-config'
+
+export const getClient = async () =&gt; getPayload({ config })
+
+/** The signed-in customer, or undefined. Pass into queries alongside overrideAccess: false. */
+export const getVisitor = async () =&gt; {
+  const payload = await getClient()
+  const { user } = await payload.auth({ headers: await nextHeaders() })
+  return user ?? undefined
+}</code></pre></figure>
+<p>And the query layer. Keeping every <code>find</code> in one module is what stops <code>overrideAccess: false</code> being forgotten on the twelfth page you write:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/lib/properties.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Where } from 'payload'
+import { getClient, getVisitor } from './payload'
+
+export type BrowseParams = {
+  district?: string
+  type?: string
+  max?: number
+  page?: number
+  tenantID?: number | string
+}
+
+export async function browseProperties(params: BrowseParams = {}) {
+  const payload = await getClient()
+  const user = await getVisitor()
+
+  const and: Where[] = []
+  if (params.tenantID) and.push({ tenant: { equals: params.tenantID } })
+  else and.push({ 'tenant.status': { equals: 'active' } })
+
+  if (params.district) and.push({ 'district.slug': { equals: params.district } })
+  if (params.type) and.push({ 'propertyType.slug': { equals: params.type } })
+  if (params.max) and.push({ price: { less_than_equal: params.max } })
+
+  return payload.find({
+    collection: 'properties',
+    where: and.length ? { and } : {},
+    overrideAccess: false,          // published + active tenant, enforced by access rules
+    user,
+    depth: 1,                       // populates tenant, gallery images, taxonomy
+    limit: 24,
+    page: params.page ?? 1,
+    sort: '-publishedAt',
+  })
+}
+
+export async function getProperty(tenantSlug: string, slug: string) {
+  const payload = await getClient()
+  const user = await getVisitor()
+
+  const { docs } = await payload.find({
+    collection: 'properties',
+    where: { and: [{ slug: { equals: slug } }, { 'tenant.slug': { equals: tenantSlug } }] },
+    overrideAccess: false,
+    user,
+    depth: 2,
+    limit: 1,
+  })
+
+  return docs[0] ?? null
+}</code></pre></figure>
+<div class="call danger">
+<span class="label">The two arguments that matter</span>
+<p><code>overrideAccess: false</code> turns the rules on; <code>user</code> says who is asking. Pass the first without the second and every request evaluates as anonymous &mdash; which is safe but breaks anything personalised. Pass neither and Payload happily returns drafts to the public.</p>
+</div>
+
+</section>
+
+<section class="chapter step" id="step-16">
+<h2><span class="numeral">16</span>Browse every listing</h2>
+<p class="goal">Goal: a filterable, paginated marketplace page reading across all active businesses.</p>
+<ul class="files"><li>src/app/(marketplace)/properties/page.tsx</li></ul>
+
+<p>The browse page: filters in the URL, results from the query layer. No tenant anywhere &mdash; this is the cross-business view.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/app/(marketplace)/properties/page.tsx</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-tsx">import Link from 'next/link'
+import { browseProperties } from '@/lib/properties'
+import { getClient } from '@/lib/payload'
+
+export const dynamic = 'force-dynamic'   // filters come from the query string
+
+export default async function BrowsePage({
+  searchParams,
+}: {
+  searchParams: Promise&lt;{ district?: string; type?: string; max?: string; page?: string }&gt;
+}) {
+  const params = await searchParams
+  const payload = await getClient()
+
+  const [results, districts] = await Promise.all([
+    browseProperties({
+      district: params.district,
+      type: params.type,
+      max: params.max ? Number(params.max) : undefined,
+      page: params.page ? Number(params.page) : 1,
+    }),
+    payload.find({ collection: 'districts', limit: 50, sort: 'name' }),
+  ])
+
+  return (
+    &lt;main&gt;
+      &lt;h1&gt;Stays across the hill country&lt;/h1&gt;
+
+      &lt;nav aria-label="Filter by district"&gt;
+        &lt;Link href="/properties"&gt;All&lt;/Link&gt;
+        {districts.docs.map((d) =&gt; (
+          &lt;Link key={d.id} href={`/properties?district=${d.slug}`}&gt;{d.name}&lt;/Link&gt;
+        ))}
+      &lt;/nav&gt;
+
+      &lt;p&gt;{results.totalDocs} properties&lt;/p&gt;
+
+      &lt;ul&gt;
+        {results.docs.map((property) =&gt; {
+          const tenant = typeof property.tenant === 'object' ? property.tenant : null
+          return (
+            &lt;li key={property.id}&gt;
+              &lt;Link href={`/properties/${tenant?.slug}/${property.slug}`}&gt;
+                &lt;h2&gt;{property.title}&lt;/h2&gt;
+              &lt;/Link&gt;
+              &lt;p&gt;{property.currency} {property.price?.toLocaleString()} per night&lt;/p&gt;
+              &lt;p&gt;Listed by {tenant?.name}&lt;/p&gt;
+            &lt;/li&gt;
+          )
+        })}
+      &lt;/ul&gt;
+
+      {results.hasNextPage &amp;&amp; (
+        &lt;Link href={`/properties?page=${results.nextPage}`}&gt;Next page&lt;/Link&gt;
+      )}
+    &lt;/main&gt;
+  )
+}</code></pre></figure>
+<p><code>depth: 1</code> is what makes <code>property.tenant</code> a populated object rather than an ID &mdash; that single setting is why each card can name the business that listed it without a second query per row. Rendering 24 cards that each fetch their own tenant is the classic multi-tenant slowdown.</p>
+
+</section>
+
+<section class="chapter step" id="step-17">
+<h2><span class="numeral">17</span>The detail page</h2>
+<p class="goal">Goal: a per-listing page keyed by business and slug, linking through to the business's own site.</p>
+<ul class="files"><li>src/app/(marketplace)/properties/[tenantSlug]/[slug]/page.tsx</li></ul>
+
+<p>The detail page is keyed by both the business and the listing, because two businesses may share a slug. That URL shape is a direct consequence of the per-tenant uniqueness rule from step 12.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/app/(marketplace)/properties/[tenantSlug]/[slug]/page.tsx</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-tsx">import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { getProperty } from '@/lib/properties'
+
+export default async function PropertyPage({
+  params,
+}: {
+  params: Promise&lt;{ tenantSlug: string; slug: string }&gt;
+}) {
+  const { tenantSlug, slug } = await params
+  const property = await getProperty(tenantSlug, slug)
+  if (!property) notFound()
+
+  const tenant = typeof property.tenant === 'object' ? property.tenant : null
+  const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN
+  const tenantSite = `https://${tenant?.slug}.${root}`
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{property.title}&lt;/h1&gt;
+      &lt;p&gt;{property.currency} {property.price?.toLocaleString()} per night &amp;middot; sleeps {property.sleeps}&lt;/p&gt;
+
+      {/* the cross-link that makes running both surfaces worthwhile */}
+      &lt;p&gt;
+        Listed by &lt;a href={tenantSite}&gt;{tenant?.name}&lt;/a&gt;
+        {tenant?.contact?.city ? ` in ${tenant.contact.city}` : null}
+      &lt;/p&gt;
+
+      &lt;Link href={`/properties?district=${
+        typeof property.district === 'object' ? property.district.slug : ''
+      }`}&gt;
+        More in this area
+      &lt;/Link&gt;
+    &lt;/article&gt;
+  )
+}</code></pre></figure><div class="checkpoint"><span class="label">Checkpoint &mdash; Part D</span><ul><li><code>/properties</code> lists published listings from both businesses.</li><li>No draft appears, in any filter combination.</li><li>Suspending a tenant in the panel removes its listings from the marketplace immediately.</li><li>A detail page renders and links out to that business's subdomain (which 404s until part E).</li></ul></div>
+</section>
+
+<div class="part-head"><span class="part-letter">Part E</span><h2 class="part-title">Tenant sites</h2><p>One deployment, many hostnames. Middleware splits the host, a layout resolves the business, and every page below it is scoped to one tenant without a single extra deployment.</p></div>
+
+<section class="chapter step" id="step-18">
+<h2><span class="numeral">18</span>Middleware and hostnames</h2>
+<p class="goal">Goal: villa-lanka.localhost:3000 rewrites to /sites/villa-lanka, and reserved names never do.</p>
+<ul class="files"><li>src/middleware.ts</li></ul>
+
+<p>Middleware runs on the edge runtime, where you cannot open a database connection or import Payload. So it does string work only: split the hostname, rewrite the path. The tenant is <em>resolved</em> one layer down, in step 19.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/middleware.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { RESERVED_SUBDOMAINS } from '@/lib/reserved'
+
+const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN!
+
+export const config = {
+  // skip the panel, the API, static files and anything with an extension
+  matcher: ['/((?!api|admin|_next|_static|favicon.ico|.*\\..*).*)'],
+}
+
+export function middleware(req: NextRequest) {
+  const host = (req.headers.get('host') || '').split(':')[0].toLowerCase()
+  const url = req.nextUrl.clone()
+
+  // nobody reaches the rewrite target directly
+  if (url.pathname.startsWith('/sites')) {
+    return NextResponse.rewrite(new URL('/404', req.url))
+  }
+
+  if (host === ROOT || host === `www.${ROOT}`) return NextResponse.next()
+
+  if (host.endsWith(`.${ROOT}`)) {
+    const sub = host.slice(0, host.length - ROOT.length - 1)
+
+    if (!sub || sub.includes('.') || RESERVED_SUBDOMAINS.has(sub)) {
+      return NextResponse.redirect(new URL(url.pathname, `https://${ROOT}`))
+    }
+
+    url.pathname = `/sites/${sub}${url.pathname}`
+    return NextResponse.rewrite(url)
+  }
+
+  // a business pointed their own domain here - resolved by customDomain
+  url.pathname = `/sites/${host}${url.pathname}`
+  return NextResponse.rewrite(url)
+}</code></pre></figure>
+<h3 id="s18-local">Testing subdomains locally</h3>
+<p>With <code>NEXT_PUBLIC_ROOT_DOMAIN=localhost</code>, subdomains of localhost work with no setup in Chrome and Firefox:</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">http://localhost:3000                      # the marketplace
+http://villa-lanka.localhost:3000          # a tenant site
+http://localhost:3000/admin                # the panel
+
+# Safari and mobile devices need a resolvable name instead - lvh.me
+# and *.lvh.me both point at 127.0.0.1 publicly:
+#   NEXT_PUBLIC_ROOT_DOMAIN=lvh.me
+http://villa-lanka.lvh.me:3000</code></pre></figure>
+<div class="call warn">
+<span class="label">Leave COOKIE_DOMAIN empty in development</span>
+<p>Browsers reject a <code>Domain</code> attribute on <code>localhost</code>. Set it and the login cookie is silently dropped, which looks exactly like a broken auth setup. In production it becomes <code>.marketplace.lk</code> so one session covers the panel and every subdomain.</p>
+</div>
+
+</section>
+
+<section class="chapter step" id="step-19">
+<h2><span class="numeral">19</span>Resolve and render a tenant site</h2>
+<p class="goal">Goal: a hostname becomes a tenant document once per request, cached, with a clean 404 when it doesn't.</p>
+<ul class="files"><li>src/lib/tenant.ts</li><li>src/app/sites/[tenant]/layout.tsx</li><li>src/app/sites/[tenant]/page.tsx</li></ul>
+
+<p>The rewrite target. This layout is the only place a hostname turns into a tenant document, and it is cached so the lookup does not repeat on every request.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/lib/tenant.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { unstable_cache } from 'next/cache'
+import { getClient } from './payload'
+
+/** Resolve a tenant by subdomain slug or custom domain. Cached per identifier. */
+export const getTenant = (identifier: string) =&gt;
+  unstable_cache(
+    async () =&gt; {
+      const payload = await getClient()
+      const { docs } = await payload.find({
+        collection: 'tenants',
+        depth: 1,
+        limit: 1,
+        pagination: false,
+        where: {
+          and: [
+            { status: { equals: 'active' } },
+            {
+              or: [
+                { slug: { equals: identifier } },
+                { customDomain: { equals: identifier } },
+              ],
+            },
+          ],
+        },
+      })
+      return docs[0] ?? null
+    },
+    ['tenant', identifier],
+    { tags: [`tenant:${identifier}`], revalidate: 300 },
+  )()</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/app/sites/[tenant]/layout.tsx</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-tsx">import type { ReactNode } from 'react'
+import { notFound } from 'next/navigation'
+import { getTenant } from '@/lib/tenant'
+
+export default async function TenantLayout({
+  children,
+  params,
+}: {
+  children: ReactNode
+  params: Promise&lt;{ tenant: string }&gt;
+}) {
+  const { tenant: identifier } = await params
+  const tenant = await getTenant(identifier)
+
+  // unknown, pending or suspended - all the same to a visitor
+  if (!tenant) notFound()
+
+  return (
+    &lt;div style={{ '--brand': tenant.brand?.accent ?? '#15596b' } as React.CSSProperties}&gt;
+      &lt;header&gt;
+        &lt;h1&gt;{tenant.name}&lt;/h1&gt;
+        {tenant.brand?.tagline &amp;&amp; &lt;p&gt;{tenant.brand.tagline}&lt;/p&gt;}
+      &lt;/header&gt;
+
+      {children}
+
+      &lt;footer&gt;
+        {tenant.contact?.whatsapp &amp;&amp; (
+          &lt;a href={`https://wa.me/${tenant.contact.whatsapp}`}&gt;Message on WhatsApp&lt;/a&gt;
+        )}
+        &lt;p&gt;Part of the marketplace &amp;middot; &lt;a href={`https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}&gt;browse all stays&lt;/a&gt;&lt;/p&gt;
+      &lt;/footer&gt;
+    &lt;/div&gt;
+  )
+}</code></pre></figure>
+<p>And the tenant's own listing page. Note it constrains by the resolved tenant <strong>ID</strong>, not by the slug from the URL &mdash; the layout has already verified that the business exists and is active:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/app/sites/[tenant]/page.tsx</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-tsx">import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { getTenant } from '@/lib/tenant'
+import { browseProperties } from '@/lib/properties'
+
+export default async function TenantHome({
+  params,
+}: {
+  params: Promise&lt;{ tenant: string }&gt;
+}) {
+  const { tenant: identifier } = await params
+  const tenant = await getTenant(identifier)
+  if (!tenant) notFound()
+
+  const { docs } = await browseProperties({ tenantID: tenant.id })
+
+  return (
+    &lt;main&gt;
+      &lt;h2&gt;Our properties&lt;/h2&gt;
+      &lt;ul&gt;
+        {docs.map((property) =&gt; (
+          &lt;li key={property.id}&gt;
+            &lt;Link href={`/properties/${property.slug}`}&gt;{property.title}&lt;/Link&gt;
+            &lt;p&gt;{property.currency} {property.price?.toLocaleString()} per night&lt;/p&gt;
+          &lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/main&gt;
+  )
+}</code></pre></figure><div class="checkpoint"><span class="label">Checkpoint &mdash; Part E</span><ul><li><code>villa-lanka.localhost:3000</code> shows only Villa Lanka's published listings.</li><li><code>haputale-stays.localhost:3000</code> shows a different set.</li><li>Setting a tenant's status to <code>suspended</code> makes its site 404 within the cache window.</li><li><code>api.localhost:3000</code> redirects to the marketplace instead of resolving a tenant.</li></ul></div>
+</section>
+
+<section class="chapter step" id="step-20">
+<h2><span class="numeral">20</span>Per-tenant site settings</h2>
+<p class="goal">Goal: one editable settings document per business, plus cache invalidation scoped to that business.</p>
+<ul class="files"><li>src/collections/SiteSettings/index.ts</li><li>src/collections/Tenants/hooks/revalidate.ts</li></ul>
+
+<p>Each business needs exactly one settings document for their site. Payload globals are single-instance, so the plugin's <code>isGlobal</code> flag gives you a collection that behaves like a global <em>within</em> the selected tenant.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/SiteSettings/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+import { isSuperAdmin } from '@/access/isSuperAdmin'
+import { getUserTenantIDs } from '@/utilities/getUserTenantIDs'
+
+export const SiteSettings: CollectionConfig = {
+  slug: 'site-settings',
+  labels: { singular: 'Site settings', plural: 'Site settings' },
+  admin: { useAsTitle: 'heroHeading', group: 'My site' },
+  access: {
+    read: () =&gt; true,
+    create: ({ req }) =&gt; req.user?.collection === 'users',
+    update: ({ req }) =&gt; {
+      if (!req.user || req.user.collection !== 'users') return false
+      if (isSuperAdmin(req.user)) return true
+      return { tenant: { in: getUserTenantIDs(req.user, 'tenant-admin') } }
+    },
+    delete: ({ req }) =&gt; isSuperAdmin(req.user),
+  },
+  fields: [
+    { name: 'heroHeading', type: 'text', required: true, defaultValue: 'Stay with us' },
+    { name: 'heroSubheading', type: 'textarea' },
+    { name: 'heroImage', type: 'upload', relationTo: 'media' },
+    { name: 'about', type: 'richText' },
+    {
+      name: 'template',
+      type: 'select',
+      defaultValue: 'classic',
+      options: ['classic', 'minimal', 'estate'],
+      admin: { description: 'Switches the layout of your public site.' },
+    },
+  ],
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">src/payload.config.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">plugins: [
+  multiTenantPlugin&lt;Config&gt;({
+    collections: {
+      properties: {},
+      media: {},
+      'site-settings': { isGlobal: true },   // one document per tenant
+    },
+    // ...
+  }),
+],</code></pre></figure>
+<h3 id="s20-revalidate">Invalidating one business at a time</h3>
+<p>The tenant lookup is cached for five minutes. Hooks make edits appear immediately without flushing everyone else's cache:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Tenants/hooks/revalidate.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import { revalidateTag } from 'next/cache'
+import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
+
+export const revalidateTenant: CollectionAfterChangeHook = ({ doc, previousDoc }) =&gt; {
+  revalidateTag(`tenant:${doc.slug}`)
+  if (doc.customDomain) revalidateTag(`tenant:${doc.customDomain}`)
+  if (previousDoc?.slug &amp;&amp; previousDoc.slug !== doc.slug) {
+    revalidateTag(`tenant:${previousDoc.slug}`)
+  }
+  return doc
+}
+
+export const revalidateTenantAfterDelete: CollectionAfterDeleteHook = ({ doc }) =&gt; {
+  revalidateTag(`tenant:${doc.slug}`)
+  return doc
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">// src/collections/Tenants/index.ts
+hooks: {
+  afterChange: [revalidateTenant],
+  afterDelete: [revalidateTenantAfterDelete],
+},</code></pre></figure>
+<p>Fetch the settings in the tenant layout alongside the tenant itself, and branch on <code>template</code> to swap layouts. That is the whole "switchable template library" feature &mdash; a select field and a component map, with no page builder to maintain.</p>
+
+</section>
+
+<div class="part-head"><span class="part-letter">Part F</span><h2 class="part-title">Customers, enquiries and shipping</h2><p>The public side of the marketplace gets accounts, businesses start receiving leads, new businesses sign themselves up, and the whole thing goes to a server.</p></div>
+
+<section class="chapter step" id="step-21">
+<h2><span class="numeral">21</span>Customer accounts</h2>
+<p class="goal">Goal: public signup and login that can never reach the admin panel or a tenant's data.</p>
+<ul class="files"><li>src/collections/Customers/index.ts</li><li>src/app/(marketplace)/account/actions.ts</li></ul>
+
+<p>A second auth collection for the browsing public. It never touches the admin panel and never carries tenant membership, which is exactly why it is separate.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Customers/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+
+export const Customers: CollectionConfig = {
+  slug: 'customers',
+  auth: {
+    tokenExpiration: 60 * 60 * 24 * 30,
+    verify: false,          // turn on once email is configured
+    maxLoginAttempts: 10,
+    lockTime: 10 * 60 * 1000,
+    cookies: {
+      domain: process.env.COOKIE_DOMAIN || undefined,
+      sameSite: 'Lax',
+      secure: process.env.NODE_ENV === 'production',
+    },
+  },
+  admin: { hidden: true },
+  access: {
+    create: () =&gt; true,                                   // public signup
+    read: ({ req }) =&gt; {
+      if (req.user?.collection === 'customers') return { id: { equals: req.user.id } }
+      return req.user?.collection === 'users'             // staff may look
+    },
+    update: ({ req }) =&gt;
+      req.user?.collection === 'customers' ? { id: { equals: req.user.id } } : false,
+    delete: ({ req }) =&gt;
+      req.user?.collection === 'customers' ? { id: { equals: req.user.id } } : false,
+    admin: () =&gt; false,                                   // never the panel
+  },
+  fields: [
+    { name: 'name', type: 'text', required: true },
+    { name: 'phone', type: 'text' },
+    {
+      name: 'favourites',
+      type: 'relationship',
+      relationTo: 'properties',
+      hasMany: true,
+    },
+  ],
+}</code></pre></figure>
+<p>Register it in <code>collections</code> &mdash; and <strong>not</strong> in the plugin's map. Customers belong to the marketplace, not to a business.</p>
+<p>Login and signup run as server actions against the Local API:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/app/(marketplace)/account/actions.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">'use server'
+
+import { headers as nextHeaders } from 'next/headers'
+import { getClient } from '@/lib/payload'
+
+export async function signUp(formData: FormData) {
+  const payload = await getClient()
+
+  await payload.create({
+    collection: 'customers',
+    data: {
+      email: String(formData.get('email')),
+      password: String(formData.get('password')),
+      name: String(formData.get('name')),
+    },
+  })
+
+  return logIn(formData)
+}
+
+export async function logIn(formData: FormData) {
+  const payload = await getClient()
+
+  const result = await payload.login({
+    collection: 'customers',
+    data: {
+      email: String(formData.get('email')),
+      password: String(formData.get('password')),
+    },
+  })
+
+  return { ok: Boolean(result.user) }
+}
+
+export async function currentCustomer() {
+  const payload = await getClient()
+  const { user } = await payload.auth({ headers: await nextHeaders() })
+  return user?.collection === 'customers' ? user : null
+}</code></pre></figure>
+<p class="xref">Why this is a separate collection rather than a role: <a href="payload-multitenant-architecture.html#u-two">architecture guide &sect;2.1</a>. The short version is that the plugin's tenant constraint only applies to the <code>admin.user</code> collection, so customers are never accidentally tenant-scoped.</p>
+
+</section>
+
+<section class="chapter step" id="step-22">
+<h2><span class="numeral">22</span>Enquiries</h2>
+<p class="goal">Goal: public lead capture that routes to exactly one business, derived server-side.</p>
+<ul class="files"><li>src/collections/Enquiries/index.ts</li><li>src/app/(marketplace)/properties/actions.ts</li></ul>
+
+<p>Enquiries invert the usual direction: the public writes them, one business reads them. The tenant is copied from the referenced property server-side, so a submitter cannot address another business's inbox.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Enquiries/index.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { CollectionConfig } from 'payload'
+import { isSuperAdminAccess } from '@/access/isSuperAdmin'
+import { extractID } from '@/utilities/extractID'
+
+export const Enquiries: CollectionConfig = {
+  slug: 'enquiries',
+  admin: {
+    useAsTitle: 'name',
+    group: 'My site',
+    defaultColumns: ['name', 'phone', 'property', 'handled', 'createdAt'],
+  },
+  access: {
+    create: () =&gt; true,                                        // anyone may enquire
+    read: ({ req }) =&gt; req.user?.collection === 'users',       // plugin narrows to their tenant
+    update: ({ req }) =&gt; req.user?.collection === 'users',
+    delete: isSuperAdminAccess,
+  },
+  hooks: {
+    beforeValidate: [
+      async ({ data, operation, req }) =&gt; {
+        if (operation !== 'create' || !data?.property) return data
+
+        const property = await req.payload.findByID({
+          collection: 'properties',
+          id: extractID(data.property),
+          depth: 0,
+          overrideAccess: true,
+        })
+
+        // the tenant comes from the property, never from the request body
+        return { ...data, tenant: extractID(property.tenant) }
+      },
+    ],
+  },
+  fields: [
+    { name: 'property', type: 'relationship', relationTo: 'properties', required: true },
+    { name: 'name', type: 'text', required: true },
+    { name: 'phone', type: 'text', required: true },
+    { name: 'email', type: 'email' },
+    { name: 'message', type: 'textarea' },
+    { name: 'handled', type: 'checkbox', defaultValue: false, admin: { position: 'sidebar' } },
+  ],
+}</code></pre></figure>
+<p>Add <code>enquiries: {}</code> to the plugin map, then the form action:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/app/(marketplace)/properties/actions.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">'use server'
+
+import { getClient } from '@/lib/payload'
+
+export async function sendEnquiry(formData: FormData) {
+  const payload = await getClient()
+
+  await payload.create({
+    collection: 'enquiries',
+    data: {
+      property: String(formData.get('property')),
+      name: String(formData.get('name')),
+      phone: String(formData.get('phone')),
+      message: String(formData.get('message')),
+    },
+    // no overrideAccess: create is public, and the hook sets the tenant
+  })
+
+  return { ok: true }
+}</code></pre></figure><div class="checkpoint"><span class="label">Checkpoint &mdash; enquiries</span><ul><li>A logged-out visitor can submit an enquiry from a property page.</li><li>The enquiry appears in the owning business's panel and nowhere else.</li><li>Posting an enquiry with a forged <code>tenant</code> in the body still lands in the right inbox.</li></ul></div>
+</section>
+
+<section class="chapter step" id="step-23">
+<h2><span class="numeral">23</span>Self-serve business signup</h2>
+<p class="goal">Goal: a public endpoint that creates a business and its first owner atomically, in a pending state.</p>
+<ul class="files"><li>src/collections/Tenants/endpoints/registerBusiness.ts</li></ul>
+
+<p>Until now you created businesses with a script. Self-serve signup is the one flow the plugin cannot help with: the tenant does not exist yet, so there is no membership to authorise against. A custom endpoint wrapped in a transaction keeps the two writes atomic.</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/collections/Tenants/endpoints/registerBusiness.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">import type { Endpoint } from 'payload'
+import { APIError } from 'payload'
+import { RESERVED_SUBDOMAINS, SUBDOMAIN_SHAPE } from '@/lib/reserved'
+
+export const registerBusiness: Endpoint = {
+  path: '/register',
+  method: 'post',
+  handler: async (req) =&gt; {
+    const body = typeof req.json === 'function' ? await req.json() : {}
+
+    // whitelist - never spread the request body into data
+    const businessName = String(body.businessName ?? '').trim()
+    const slug = String(body.slug ?? '').toLowerCase().trim()
+    const email = String(body.email ?? '').trim()
+    const password = String(body.password ?? '')
+
+    if (!businessName || !email || password.length &lt; 8) {
+      throw new APIError('Missing or invalid fields.', 400, null, true)
+    }
+    if (!SUBDOMAIN_SHAPE.test(slug) || RESERVED_SUBDOMAINS.has(slug)) {
+      throw new APIError('That address is not available.', 400, null, true)
+    }
+
+    const taken = await req.payload.count({
+      collection: 'tenants',
+      where: { slug: { equals: slug } },
+      overrideAccess: true,
+    })
+    if (taken.totalDocs &gt; 0) {
+      throw new APIError('That address is already taken.', 409, null, true)
+    }
+
+    const transactionID = await req.payload.db.beginTransaction()
+    const txReq = { transactionID }
+
+    try {
+      const tenant = await req.payload.create({
+        collection: 'tenants',
+        data: { name: businessName, slug, status: 'pending' },   // you approve it
+        overrideAccess: true,
+        req: txReq,
+      })
+
+      await req.payload.create({
+        collection: 'users',
+        data: {
+          email,
+          password,
+          name: businessName,
+          roles: ['user'],                                       // never from the body
+          tenants: [{ tenant: tenant.id, roles: ['tenant-admin'] }],
+        },
+        overrideAccess: true,
+        req: txReq,
+      })
+
+      await req.payload.db.commitTransaction(transactionID)
+      return Response.json({ ok: true, slug: tenant.slug }, { status: 201 })
+    } catch (error) {
+      await req.payload.db.rollbackTransaction(transactionID)
+      throw new APIError('Could not create the business.', 500, null, true)
+    }
+  },
+}</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">// src/collections/Tenants/index.ts
+import { registerBusiness } from './endpoints/registerBusiness'
+
+export const Tenants: CollectionConfig = {
+  slug: 'tenants',
+  endpoints: [registerBusiness],   // POST /api/tenants/register
+  // ...
+}</code></pre></figure>
+<div class="call danger">
+<span class="label">This is your most exposed surface</span>
+<p>Payload does not authenticate custom endpoints &mdash; this one is deliberately public. Rate-limit it, keep <code>status: 'pending'</code> so a new business cannot go live without you, and never let the body decide <code>roles</code>, <code>status</code> or <code>plan</code>. The whitelist at the top of the handler is the entire defence.</p>
+</div>
+
+</section>
+
+<section class="chapter step" id="step-24">
+<h2><span class="numeral">24</span>Ship it</h2>
+<p class="goal">Goal: migrations instead of push, wildcard DNS and certificates, and a verified production deploy.</p>
+<ul class="files"><li>src/migrations/</li><li>.env.production</li><li>src/payload.config.ts</li></ul>
+
+<h3 id="s24-migrations">Switch from push to migrations</h3>
+<p>In development the Postgres adapter pushes schema changes straight into the database. Production must not work that way. Generate a migration from your current schema, commit it, and run migrations as part of the build:</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm payload migrate:create initial
+git add src/migrations &amp;&amp; git commit -m "initial schema"</code></pre></figure><figure class="code "><div class="code-head"><span class="code-file">package.json</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-json">{
+  "scripts": {
+    "ci": "payload migrate &amp;&amp; pnpm build"
+  }
+}</code></pre></figure>
+<h3 id="s24-dns">DNS and certificates</h3>
+<ul>
+  <li>An <code>A</code> record for <code>marketplace.lk</code> and a wildcard <code>*.marketplace.lk</code>, both pointing at the same server.</li>
+  <li>A wildcard TLS certificate. Let's Encrypt only issues wildcards over the DNS-01 challenge, so your reverse proxy needs API credentials for your DNS provider. This is the step that most often stalls a first subdomain deploy &mdash; test it before you need it.</li>
+  <li>One container serves everything. No per-tenant deploys, no per-tenant environment variables.</li>
+</ul>
+
+<h3 id="s24-env">Production environment</h3>
+<figure class="code "><div class="code-head"><span class="code-file">.env.production</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">DATABASE_URI=postgres://user:pass@db:5432/marketplace
+PAYLOAD_SECRET=&lt;64 random characters&gt;
+NEXT_PUBLIC_SERVER_URL=https://marketplace.lk
+NEXT_PUBLIC_ROOT_DOMAIN=marketplace.lk
+COOKIE_DOMAIN=.marketplace.lk</code></pre></figure>
+<p>And widen the two allow-lists in the config, since authenticated requests now arrive from subdomains:</p>
+<figure class="code "><div class="code-head"><span class="code-file">src/payload.config.ts</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-ts">cors: [process.env.NEXT_PUBLIC_SERVER_URL as string],
+csrf: [process.env.NEXT_PUBLIC_SERVER_URL as string],
+// both take fixed arrays - no wildcards. Tenant sites are same-origin server
+// renders, so they need no entry. Add an origin only for a genuinely separate
+// client, such as a mobile app or a custom domain front end.</code></pre></figure>
+<h3 id="s24-media">Move media off the local disk</h3>
+<p><code>staticDir</code> writes into the container's filesystem, which disappears on redeploy. Before real users upload anything, swap in object storage &mdash; a config change that touches no access rules:</p>
+<figure class="code term"><div class="code-head"><span class="code-file">terminal</span><button class="copy" type="button">Copy</button></div><pre><code class="lang-bash">pnpm add @payloadcms/storage-s3</code></pre></figure>
+<h3 id="s24-checks">After the first deploy</h3>
+<div class="checkpoint"><span class="label">Checkpoint &mdash; production</span><ul><li><code>https://marketplace.lk</code> and <code>https://villa-lanka.marketplace.lk</code> both serve, on valid certificates.</li><li>Logging in at <code>/admin</code> keeps you logged in on a subdomain (the cookie domain works).</li><li>An anonymous <code>GET /api/properties</code> returns no drafts.</li><li>A reserved name such as <code>api.marketplace.lk</code> redirects rather than resolving a tenant.</li><li>Deleting a test tenant removes its listings &mdash; confirming <code>cleanupAfterTenantDelete</code> behaves as expected.</li></ul></div>
+<h3 id="s24-next">What comes after</h3>
+<ul>
+  <li><strong>Custom domains.</strong> The resolver already accepts one; what is missing is on-demand certificate issuance and a verification flow so a business proves it owns the domain.</li>
+  <li><strong>Plan limits.</strong> A <code>beforeChange</code> hook on properties that counts existing listings and refuses past the free-tier ceiling.</li>
+  <li><strong>Templates.</strong> The <code>template</code> select from step 20, mapped to real layout components.</li>
+  <li><strong>A mobile client.</strong> Native apps cannot rely on the host header, so tenant scope becomes an explicit query parameter against the same REST API &mdash; no new endpoints needed.</li>
+  <li><strong>Tests.</strong> Seed two tenants and assert the failures: tenant A reading, updating and deleting tenant B's documents. Multi-tenant bugs are invisible in single-tenant testing.</li>
+</ul>
+<p class="xref">Before adding users, walk the <a href="payload-multitenant-architecture.html#checklist">security checklist</a> in the architecture guide. Most items are one line of config, and each closes a path the plugin does not close for you.</p>
+
+</section>
+
+<div class="foot">
+  <p>Companion to the <a href="payload-multitenant-architecture.html">architecture reference</a>, which covers the reasoning, the access-control pipeline and the security checklist. Written against Payload 3.x and <code>@payloadcms/plugin-multi-tenant</code> 3.89 &mdash; if a command behaves differently, check the version before rewriting your config.</p>
+</div>
+
+  </main>
+</div>
+<script>
+(function(){
+  // --- syntax highlighting -------------------------------------------------
+  var KW = /\b(import|export|from|const|let|var|function|return|if|else|await|async|type|interface|extends|implements|new|class|default|for|of|in|throw|try|catch|finally|typeof|instanceof|as|true|false|null|undefined|void|this|super|satisfies)\b/;
+  var RE = new RegExp([
+    "(\\/\\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*|#[^\\n]*)",
+    "('(?:\\\\.|[^'\\\\\\n])*'|\"(?:\\\\.|[^\"\\\\\\n])*\"|`(?:\\\\.|[^`\\\\])*`)",
+    "(\\b\\d+(?:\\.\\d+)?\\b)",
+    KW.source
+  ].join("|"), "g");
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  document.querySelectorAll("figure.code code").forEach(function(el){
+    var raw = el.textContent;
+    el.innerHTML = esc(raw).replace(RE, function(m, com, str, num, kw){
+      if(com) return '<span class="tok-com">'+com+'</span>';
+      if(str) return '<span class="tok-str">'+str+'</span>';
+      if(num) return '<span class="tok-num">'+num+'</span>';
+      if(kw)  return '<span class="tok-key">'+kw+'</span>';
+      return m;
+    });
+  });
+
+  // --- copy buttons --------------------------------------------------------
+  document.querySelectorAll(".copy").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var codeEl = btn.closest("figure").querySelector("code");
+      navigator.clipboard.writeText(codeEl.textContent).then(function(){
+        var old = btn.textContent; btn.textContent = "Copied";
+        setTimeout(function(){ btn.textContent = old; }, 1400);
+      }).catch(function(){ btn.textContent = "Press Ctrl+C"; });
+    });
+  });
+
+  // --- scroll spy ----------------------------------------------------------
+  var links = {};
+  document.querySelectorAll(".toc a").forEach(function(a){ links[a.getAttribute("href").slice(1)] = a; });
+  var targets = Object.keys(links).map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  var current = null;
+  function spy(){
+    var best = null, bestTop = -1e9;
+    targets.forEach(function(t){
+      var top = t.getBoundingClientRect().top - 110;
+      if(top <= 0 && top > bestTop){ bestTop = top; best = t; }
+    });
+    if(!best && targets.length) best = targets[0];
+    if(best && best.id !== current){
+      if(current && links[current]) links[current].classList.remove("on");
+      current = best.id;
+      links[current].classList.add("on");
+    }
+  }
+  var ticking = false;
+  window.addEventListener("scroll", function(){
+    if(!ticking){ ticking = true; requestAnimationFrame(function(){ spy(); ticking = false; }); }
+  }, {passive:true});
+  spy();
+
+  // --- mobile nav ----------------------------------------------------------
+  var toc = document.querySelector(".toc");
+  var tog = document.querySelector(".navtoggle");
+  if(tog){
+    tog.addEventListener("click", function(){
+      var open = toc.getAttribute("data-open") === "true";
+      toc.setAttribute("data-open", open ? "false" : "true");
+      tog.textContent = open ? "Contents" : "Hide contents";
+    });
+    toc.querySelectorAll("a").forEach(function(a){
+      a.addEventListener("click", function(){
+        if(window.matchMedia("(max-width:980px)").matches){
+          toc.setAttribute("data-open","false"); tog.textContent = "Contents";
+        }
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>
